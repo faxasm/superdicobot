@@ -11,8 +11,9 @@
 #
         TWITCH_USER=userbot
         TWITCH_OAUTH=oauth:xxx
-        TWITCH_CHANNEL=botChannel
+        TWITCH_CHANNEL=botChannel,anotherChannel   #comma separated channel
         UNTIMEOUT_CMD=!unto
+        PING_CMD=!ping superdicobot
         MAX_TIMEOUT_DURATION=600   
 
 ##  en local
@@ -25,4 +26,4 @@
 
 ##  lancer l'application
 
-    ./target/app
+    ./target/superdicobot

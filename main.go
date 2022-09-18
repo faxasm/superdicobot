@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"go.uber.org/ratelimit"
 	"log"
+	"strings"
 	userpool "superdicobot/internal"
 	"superdicobot/utils"
 
@@ -18,10 +20,18 @@ func main() {
 	if errConfig != nil {
 		log.Fatal("cannot load config:", errConfig)
 	}
+	//rateLimiter Global
+	rl := ratelimit.New(3) // per second limit twitch:  100 per 30 seconds
+
 	client := twitch.NewClient(config.TwitchUser, config.TwitchOauth)
-	channel := config.TwitchChannel
+	configChannel := config.TwitchChannel
+	channels := strings.Split(configChannel, ",")
+
 	timeoutPool := TimeoutPool{}
-	timeoutPool[channel] = userpool.New(0, channel, client)
+
+	for _, channel := range channels {
+		timeoutPool[channel] = userpool.New(0, channel, client, rl)
+	}
 	t, _ := json.Marshal(client)
 
 	// output conf client
@@ -32,20 +42,32 @@ func main() {
 		fmt.Println(message.Raw)
 	})
 
+	client.OnPongMessage(func(message twitch.PongMessage) {
+		//show pong bot status
+		fmt.Println(message.Raw)
+	})
+
 	client.OnClearChatMessage(func(message twitch.ClearChatMessage) {
 		if message.BanDuration > 0 && message.BanDuration <= config.MaxTimeoutDuration {
 			limit := message.Time.Unix() + int64(message.BanDuration)
 			timeoutPool[message.Channel].Put(message.TargetUsername, message.TargetUserID, limit)
 			fmt.Println("timeout detected for" + message.TargetUsername)
-			fmt.Println(timeoutPool[channel].Display())
+			fmt.Println(timeoutPool[message.Channel].Display())
 		}
 	})
 
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
-		if message.Message == config.UntimeoutCmd {
-			moderator, hasModerator := message.User.Badges["moderator"]
-			broadcaster, hasBroadcaster := message.User.Badges["broadcaster"]
-			if (hasModerator && moderator == 1) || (hasBroadcaster && broadcaster == 1) {
+		moderator, hasModerator := message.User.Badges["moderator"]
+		broadcaster, hasBroadcaster := message.User.Badges["broadcaster"]
+		if (hasModerator && moderator == 1) || (hasBroadcaster && broadcaster == 1) {
+
+			if message.Message == config.PingCmd {
+				println("receive ping from: " + message.Channel + " by: " + message.User.Name)
+				rl.Take()
+				client.Say(message.Channel, "Pong ! @"+message.User.Name)
+			}
+
+			if message.Message == config.UntimeoutCmd {
 				if timeoutPool[message.Channel].Len() > 0 {
 					println("untimeout detected")
 					println(timeoutPool[message.Channel].Display())
@@ -55,7 +77,8 @@ func main() {
 		}
 	})
 
-	client.Join(channel)
+	fmt.Println("Start listening on: " + configChannel)
+	client.Join(channels...)
 
 	err := client.Connect()
 	if err != nil {

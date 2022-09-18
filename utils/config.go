@@ -9,6 +9,7 @@ type Config struct {
 	TwitchOauth        string `mapstructure:"TWITCH_OAUTH"`
 	TwitchChannel      string `mapstructure:"TWITCH_CHANNEL"`
 	UntimeoutCmd       string `mapstructure:"UNTIMEOUT_CMD"`
+	PingCmd            string `mapstructure:"PING_CMD"`
 	MaxTimeoutDuration int    `mapstructure:"MAX_TIMEOUT_DURATION"`
 }
 

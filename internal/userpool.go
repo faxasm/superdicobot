@@ -18,13 +18,15 @@ type TTLMap struct {
 	channel string
 	client  *twitch.Client
 	l       sync.Mutex
+	rl      ratelimit.Limiter
 }
 
-func New(ln int, channel string, client *twitch.Client) (m *TTLMap) {
+func New(ln int, channel string, client *twitch.Client, rl ratelimit.Limiter) (m *TTLMap) {
 	m = &TTLMap{
 		m:       make(map[string]*userPool, ln),
 		channel: channel,
 		client:  client,
+		rl:      rl,
 	}
 
 	go func() {
@@ -85,10 +87,9 @@ func (m *TTLMap) Clear() {
 }
 
 func (m *TTLMap) UnTimeout() {
-	rl := ratelimit.New(3) // per second limit twitch:  100 per 30 seconds
 	m.l.Lock()
 	for username, _ := range m.m {
-		rl.Take()
+		m.rl.Take()
 		m.client.Say(m.channel, "/untimeout "+username)
 	}
 	m.l.Unlock()

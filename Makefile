@@ -1,4 +1,4 @@
-.PHONY: clean deps simplify run test coverage build update-certs
+.PHONY: clean deps simplify run test coverage build
 
 clean:
 		rm -rf target; \
@@ -20,12 +20,8 @@ coverage: test
 		go test -coverprofile=coverage.out ./...; \
 		go tool cover -html=coverage.out -o coverage.html
 
-build: deps update-certs
+build: deps
 		CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 		go build \
 		-a -installsuffix cgo \
-		-tags=jsoniter -o target/app .
-
-update-certs:
-		mkdir -p target && \
-		curl -o target/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem
+		-tags=jsoniter -o target/superdicobot .
