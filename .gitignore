@@ -2,5 +2,8 @@
 *.sh
 *.iml
 *.env
+*.log
+log/
+config/*
 .DS_Store
 .vscode

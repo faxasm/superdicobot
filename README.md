@@ -6,15 +6,38 @@
 #
 
 ## configuration
-    placer un fichier de conf app.env  dans le dossier ./config
+    placer un fichier de conf config.yaml  dans le dossier ./config
     avec ces parametres:
 #
-        TWITCH_USER=userbot
-        TWITCH_OAUTH=oauth:xxx
-        TWITCH_CHANNEL=botChannel,anotherChannel   #comma separated channel
-        UNTIMEOUT_CMD=!unto
-        PING_CMD=!ping superdicobot
-        MAX_TIMEOUT_DURATION=600   
+
+```
+loggerLevel: "info" #niveau de log global
+loggerFile: "./log/main.log"
+bots:
+ -
+  user: "botName"
+  oauth: "oauth:xxx"
+  loggerLevel: "info" # niveau de log pour le bot
+  loggerFile: "./log/botName.log" 
+  administrator: "userAdmin" #admin du bot
+  channels:
+    -
+     channel: "oneChannel" # channel twitch
+     unTimeoutCmd: "!unto" # commande de untimeout en masse
+     pingCmd: "!ping superdicobot" # commande de ping sur la chaine
+     maxTimeoutDuration: 600 # temps max de timeout qui sera untimeout
+     loggerLevel: "info" # niveau de log pour le channel
+     loggerFile: "./log/botName/oneChannel.log" # fichier de log pour ce chan
+    -
+     channel: "secondChannel"
+     unTimeoutCmd: "!unto"
+     pingCmd: "!ping superdicobot"
+     maxTimeoutDuration: 600
+     loggerLevel: "info"
+     loggerFile: "./log/botName/secondChannel.log"
+```yaml
+
+
 
 ##  en local
 

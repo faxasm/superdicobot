@@ -2,7 +2,6 @@ package userpool
 
 import (
 	"github.com/gempir/go-twitch-irc/v3"
-	"go.uber.org/ratelimit"
 	"strconv"
 	"sync"
 	"time"
@@ -18,15 +17,13 @@ type TTLMap struct {
 	channel string
 	client  *twitch.Client
 	l       sync.Mutex
-	rl      ratelimit.Limiter
 }
 
-func New(ln int, channel string, client *twitch.Client, rl ratelimit.Limiter) (m *TTLMap) {
+func New(ln int, channel string, client *twitch.Client) (m *TTLMap) {
 	m = &TTLMap{
 		m:       make(map[string]*userPool, ln),
 		channel: channel,
 		client:  client,
-		rl:      rl,
 	}
 
 	go func() {
@@ -71,7 +68,7 @@ func (m *TTLMap) Display() (v string) {
 	m.l.Lock()
 	for i, k := range m.m {
 		timeRemaining := k.lastValid - time.Now().Unix()
-		v = v + k.value + "->" + i + ": " + strconv.FormatInt(timeRemaining, 10) + "s\n"
+		v = v + i + "->" + strconv.FormatInt(timeRemaining, 10) + "s || "
 	}
 	m.l.Unlock()
 	return
@@ -89,7 +86,6 @@ func (m *TTLMap) Clear() {
 func (m *TTLMap) UnTimeout() {
 	m.l.Lock()
 	for username, _ := range m.m {
-		m.rl.Take()
 		m.client.Say(m.channel, "/untimeout "+username)
 	}
 	m.l.Unlock()
