@@ -1,0 +1,32 @@
+{{ define "views/bot.gohtml"}}
+    {{ template "layouts/top.gohtml" .}}
+    <!-- /.container-fluid -->
+
+    <div class="row">
+        <div class="m-4 col-lg mb-4">
+
+            <!-- Project Card Example -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Configuration</h6>
+                </div>
+
+                <div class="card-body">
+                    <form type="submit" action="" method="get">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="customCheck1" name="activate">
+                        <label class="custom-control-label" for="customCheck1">Bot activé</label>
+                    </div>
+                        <hr class="sidebar-divider">
+
+                        <button class="btn btn-primary" type="submit">Enregistrer</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    </div>
+    {{ template "layouts/bottom.gohtml" .}}
+{{ end }}

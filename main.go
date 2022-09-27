@@ -4,6 +4,7 @@ import (
 	"go.uber.org/zap"
 	"superdicobot/internal/bot"
 	"superdicobot/internal/logger"
+	"superdicobot/server"
 	"superdicobot/utils"
 )
 
@@ -20,6 +21,8 @@ func main() {
 		go bot.NewBot(notify, botConfig)
 	}
 
+	//start webserver
+	go server.LaunchServer(notify, config)
 	msg := <-notify
 	Logger.Error("panic for at least one bot", zap.String("notify", msg))
 	Logger.Info("this is the end.")

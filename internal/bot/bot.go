@@ -80,7 +80,7 @@ func NewBot(notify chan string, botConfig utils.Bot) {
 			channelInstance := channelInstances[message.Channel]
 			if message.Message == channelInstance.ChannelConfig.PingCmd {
 				channelInstance.Logger.Info("receive ping", zap.Reflect("message", message))
-				client.Reply(message.Channel, message.ID, "Pong ! @"+message.User.Name)
+				client.Reply(message.Channel, message.ID, "Pong !")
 			}
 
 			if message.Message == channelInstance.ChannelConfig.UnTimeoutCmd {
@@ -93,6 +93,13 @@ func NewBot(notify chan string, botConfig utils.Bot) {
 				}
 			}
 		}
+	})
+
+	client.OnNoticeMessage(func(message twitch.NoticeMessage) {
+		channelInstance := channelInstances[message.Channel]
+		channelInstance.Logger.Info("Notice Message detected",
+			zap.String("channel", message.Channel),
+			zap.Reflect("message", message))
 	})
 
 	Logger.Info("Start listening on", zap.String("channel", strings.Join(channels, ",")))

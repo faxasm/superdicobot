@@ -1,0 +1,35 @@
+{{ define "layouts/top.gohtml" }}
+
+<!DOCTYPE html>
+<html lang="en">
+
+{{ template "layouts/header.gohtml" .}}
+
+<body id="page-top">
+
+<div id="wrapper">
+
+    <!-- Sidebar -->
+    {{ template "layouts/sidebar.gohtml" .}}
+    <!-- End of Sidebar -->
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+
+        <!-- Main Content -->
+        <div id="content">
+
+            <!-- Topbar -->
+            {{ template "layouts/topbar.gohtml" .}}
+            <!-- End of Topbar -->
+
+            <!-- Begin Page Content -->
+            <div class="container-fluid">
+
+                <!-- Page Heading -->
+                <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                    <h1 class="h3 mb-0 text-gray-800">Administration {{ if ne .currentBot "" }} >  {{ .currentBot }} {{ end }}{{ if ne .currentChannel "" }} >  {{ .currentChannel }} {{ end }}</h1>
+                </div>
+
+            </div>
+{{ end }}
