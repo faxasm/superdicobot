@@ -18,11 +18,12 @@ func main() {
 
 	//connecting foreach channel
 	for _, botConfig := range config.Bots {
-		go bot.NewBot(notify, botConfig)
+		go bot.NewBot(notify, botConfig, config)
 	}
 
 	//start webserver
-	go server.LaunchServer(notify, config)
+	go server.LaunchServer(notify, config, Logger)
+
 	msg := <-notify
 	Logger.Error("panic for at least one bot", zap.String("notify", msg))
 	Logger.Info("this is the end.")

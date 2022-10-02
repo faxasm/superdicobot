@@ -4,6 +4,8 @@ import (
 	"encoding/gob"
 	"github.com/gin-gonic/autotls"
 	"superdicobot/internal/handlers"
+	"superdicobot/internal/logger"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -15,9 +17,11 @@ import (
 )
 import "github.com/gin-gonic/gin"
 
-func LaunchServer(notify chan string, config utils.Config) {
+func LaunchServer(notify chan string, config utils.Config, Logger logger.LogWrapperObj) {
 
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
+	r.Use(logger.GinZap(Logger, time.RFC3339, true, false))
 
 	//register statics
 	r.Static("/css", "./server/web/css")
@@ -30,7 +34,7 @@ func LaunchServer(notify chan string, config utils.Config) {
 	r.LoadHTMLGlob("server/templates/**/*")
 	gob.Register(oauth2.Token{})
 
-	r.Use(utils.ConfigMiddleware(config))
+	r.Use(utils.ConfigMiddleware(config, Logger))
 
 	store := cookie.NewStore([]byte(config.Webserver.Oauth.CookieSecret))
 	store.Options(sessions.Options{MaxAge: 365 * 60 * 60 * 24}) // expire in a day
@@ -46,6 +50,7 @@ func LaunchServer(notify chan string, config utils.Config) {
 	r.GET("/", oauth.Root)
 	r.GET("/login", oauth.Login)
 	r.GET("/redirect", oauth.Redirect)
+	r.POST("/events", handlers.EventCallback)
 
 	restricted := r.Group("/admin")
 	//register statics

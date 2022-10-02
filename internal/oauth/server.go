@@ -10,14 +10,16 @@ import (
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/twitch"
 	"io"
 	"net/url"
+	"strings"
 	userpool "superdicobot/internal"
+	"superdicobot/internal/logger"
 	"time"
 
-	"log"
 	"net/http"
 	"superdicobot/utils"
 )
@@ -91,13 +93,14 @@ func Login(c *gin.Context) {
 
 func Redirect(c *gin.Context) {
 	oauth2Config := c.Value("oauth2Config").(*oauth2.Config)
+	Logger := c.Value("logger").(logger.LogWrapperObj)
 	session := sessions.Default(c)
 	var err error
 
 	// ensure we flush the csrf challenge even if the request is ultimately unsuccessful
 	defer func() {
 		if err := session.Save(); err != nil {
-			log.Printf("error saving session: %s", err)
+			Logger.Error("error saving session", zap.Error(err))
 		}
 	}()
 	switch stateChallenge, state := session.Flashes(stateCallbackKey), c.Request.FormValue("state"); {
@@ -144,6 +147,9 @@ func Redirect(c *gin.Context) {
 		return
 	}
 
+	if globalState.Redirect == "/" || globalState.Redirect == "" {
+		globalState.Redirect = "/admin/"
+	}
 	http.Redirect(c.Writer, c.Request, globalState.Redirect, http.StatusTemporaryRedirect)
 
 }
@@ -151,8 +157,10 @@ func Redirect(c *gin.Context) {
 func SaveTokenToSession(c *gin.Context, session sessions.Session, token *oauth2.Token) (err error) {
 
 	// add the oauth token to session
+	session.Options(sessions.Options{
+		Path: "/",
+	})
 	session.Set(oauthTokenKey, *token)
-
 	err = session.Save()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -170,6 +178,7 @@ func CheckSession() func(ctx *gin.Context) {
 		//oidcVerifier := c.Value("oidcVerifier").(*oidc.IDTokenVerifier)
 		oauth2Config := c.Value("oauth2Config").(*oauth2.Config)
 		oauthPool := c.Value("oauthPool").(*userpool.TTLOauthMap)
+		Logger := c.Value("logger").(logger.LogWrapperObj)
 		session := sessions.Default(c)
 
 		q := url.Values{}
@@ -182,6 +191,7 @@ func CheckSession() func(ctx *gin.Context) {
 			tokenKey = &tokenData
 		} else {
 			c.Redirect(http.StatusTemporaryRedirect, login.RequestURI())
+			c.Abort()
 			return
 		}
 		if tokenKey.Expiry.Before(time.Now()) {
@@ -189,6 +199,7 @@ func CheckSession() func(ctx *gin.Context) {
 			tok, err := ts.Token()
 			if err != nil {
 				c.Redirect(http.StatusTemporaryRedirect, login.RequestURI())
+				c.Abort()
 				return
 			}
 			// update session !
@@ -199,11 +210,11 @@ func CheckSession() func(ctx *gin.Context) {
 						"msg": "Couldn't get valid state!",
 						"err": err.Error(),
 					})
+					c.Abort()
 					return
 				}
 			}
 		}
-
 		tokenData := session.Get(oauthTokenKey).(oauth2.Token)
 
 		user := oauthPool.Get(tokenData.AccessToken)
@@ -212,7 +223,8 @@ func CheckSession() func(ctx *gin.Context) {
 			client := oauth2.NewClient(context.Background(), ts)
 			response, err := client.Get("https://id.twitch.tv/oauth2/userinfo")
 			if err != nil {
-				println(fmt.Sprintf("error %v", err))
+				Logger.Error("unable to decode msg", zap.Error(err))
+				c.Abort()
 				return
 			}
 			defer response.Body.Close()
@@ -222,9 +234,9 @@ func CheckSession() func(ctx *gin.Context) {
 					"msg": "Couldn't generate a session!",
 					"err": err.Error(),
 				})
+				c.Abort()
 				return
 			}
-			println(fmt.Sprintf("body: %v", string(body)))
 			var claim struct {
 				Iss               string `json:"iss"`
 				Sub               string `json:"sub"`
@@ -241,16 +253,15 @@ func CheckSession() func(ctx *gin.Context) {
 					"msg": "Couldn't get user infos!",
 					"err": err.Error(),
 				})
+				c.Abort()
 				return
 			}
-			println("update pool")
 			oauthPool.Put(tokenData.AccessToken, claim.PreferredUsername, int64(claim.Exp))
 			user = oauthPool.Get(tokenData.AccessToken)
 		}
 
-		println(oauthPool.Display())
-		println(user)
-		c.Set("user", user)
+		Logger.Info("display pool oauth", zap.String("pool", oauthPool.Display()))
+		c.Set("user", strings.ToLower(user))
 		c.Next()
 	}
 }

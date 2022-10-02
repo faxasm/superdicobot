@@ -44,14 +44,153 @@
 
 <!-- Custom scripts for all pages-->
 <script src="/js/sb-admin-2.min.js"></script>
+<script type="text/javascript">
+    // add row
+    $("#addRow").click(function () {
+        let html = `
+                <div id="inputFormRow">
+                    <div class="input-group mb-3">
+                        <input style="width:150px;" type="text" name="customCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                        <input type="text" name="customCmd[cmd][]" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
+                        <input style="width:50px;" type="text" name="customCmd[coolDown][]" class="form-control m-input" placeholder="CoolDown" autocomplete="off">
+                        <select class="custom-select"
+                                style="width:150px;" name="customCmd[user][]">
+                                    <option value="streamer">Streameur</option>
+                                    <option value="moderator" >Moderateur</option>
+                                    <option value="all">Tous</option>
+                         </select>
+                        <div class="input-group-append">
+                            <button id="removeRow" type="button" class="btn btn-danger">Supprimer</button>
+                        </div>
+                    </div>
+                </div>
+            `
 
-<!-- Page level plugins -->
-<script src="/vendor/chart.js/Chart.min.js"></script>
+        $('#newRow').append(html);
+    });
 
-<!-- Page level custom scripts -->
-<script src="/js/demo/chart-area-demo.js"></script>
-<script src="/js/demo/chart-pie-demo.js"></script>
+    //add Score Recompense row
+    // add row
+    $("#addRowScoreRecompense").click(function () {
+        let html = `
+                                    <div id="inputFormRow">
+                                        <div class="input-group mb-3">
+                                            <input style="width:150px;" type="text" name="rewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                                            <input type="text" name="rewardCmd[cmd][]" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
+                                            <input style="width:50px;" type="text" name="rewardCmd[coolDown][]"   class="form-control m-input" placeholder="CoolDown" autocomplete="off">
+                                            <input style="width:50px;" type="text" name="rewardCmd[id][]"  class="form-control m-input" placeholder="Id" autocomplete="off">
+                                            <select class="custom-select"
+                                                    style="width:150px;" name="rewardCmd[user][]">
+                                                <option  value="streamer">Streameur</option>
+                                                <option  value="moderator" >Moderateur</option>
+                                                <option  value="all">Tous</option>
+                                            </select>
+                                            <div class="input-group-append">
+                                                <button id="removeRow" type="button" class="btn btn-danger">Supprimer</button>
+                                            </div>
+                                        </div>
+                                    </div>
+            `
 
+        $('#newRowScoreRecompense').append(html);
+    });
+
+    //add Last Recompense row
+    // add row
+    $("#addRowLastRecompense").click(function () {
+        let html = `
+                                    <div id="inputFormRow">
+                                        <div class="input-group mb-3">
+                                            <input style="width:150px;" type="text" name="lastRewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                                            <input type="text" name="lastRewardCmd[cmd][]" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
+                                            <input style="width:50px;" type="text" name="lastRewardCmd[coolDown][]"   class="form-control m-input" placeholder="Cooldown" autocomplete="off">
+                                            <input style="width:50px;" type="text" name="lastRewardCmd[id][]"  class="form-control m-input" placeholder="Id" autocomplete="off">
+                                            <select class="custom-select"
+                                                    style="width:150px;" name="lastRewardCmd[user][]">
+                                                <option  value="streamer">Streameur</option>
+                                                <option  value="moderator" >Moderateur</option>
+                                                <option  value="all">Tous</option>
+                                            </select>
+                                            <div class="input-group-append">
+                                                <button id="removeRow" type="button" class="btn btn-danger">Supprimer</button>
+                                            </div>
+                                        </div>
+                                    </div>
+            `
+
+        $('#newRowLastRecompense').append(html);
+    });
+
+    //add Last Recompense row
+    // add row
+    $("#addRowSoldRecompense").click(function () {
+        let html = `
+                                    <div id="inputFormRow">
+                                        <div class="input-group mb-3">
+                                            <input style="width:150px;" type="text" name="soldRewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                                            <input type="text" name="soldRewardCmd[cmd][]" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
+                                            <input style="width:50px;" type="text" name="soldRewardCmd[coolDown][]"   class="form-control m-input" placeholder="Cooldown" autocomplete="off">
+                                            <input style="width:50px;" type="text" name="soldRewardCmd[id][]"  class="form-control m-input" placeholder="Id" autocomplete="off">
+                                            <input style="width:30px;" type="text" name="soldRewardCmd[unit][]"  class="form-control m-input" placeholder="1" autocomplete="off">
+                                            <select class="custom-select"
+                                                    style="width:150px;" name="soldRewardCmd[user][]">
+                                                <option  value="streamer">Streameur</option>
+                                                <option  value="moderator" >Moderateur</option>
+                                                <option  value="all">Tous</option>
+                                            </select>
+                                            <div class="input-group-append">
+                                                <button id="removeRow" type="button" class="btn btn-danger">Supprimer</button>
+                                            </div>
+                                        </div>
+                                    </div>
+            `
+
+        $('#newRowSoldRecompense').append(html);
+    });
+
+
+    //add Last Recompense row
+    // add row
+    $("#addAutoRecompense").click(function () {
+        let html = `
+                                    <div id="inputFormRow" class="m-2">
+
+                                        <div class="input-group">
+                                            <input style="width:150px;" type="text" disabled="disabled" class="form-control m-input" value="Code récompense" autocomplete="off">
+                                            <input type="text" class="form-control m-input w-75" value="" name="cronRewardCmd[id][]"  autocomplete="off">
+                                        </div>
+                                        <div class="input-group">
+                                            <input style="width:150px;" type="text" disabled="disabled" class="form-control m-input" value="Fréquence (secondes)" autocomplete="off">
+                                            <input type="text" class="form-control m-input w-75" value="" name="cronRewardCmd[period][]"  autocomplete="off">
+                                        </div>
+                                        <div class="input-group">
+                                            <input style="width:150px;" type="text" disabled="disabled" class="form-control m-input" value="Solde > 0" autocomplete="off">
+                                            <input type="text" class="form-control m-input w-75" value=""  name="cronRewardCmd[soldPositive][]" autocomplete="off">
+                                        </div>
+                                        <div class="input-group">
+                                            <input style="width:150px;" type="text" disabled="disabled" class="form-control m-input" value="Action > 0" autocomplete="off">
+                                            <input type="text" class="form-control m-input w-75" value=""  name="cronRewardCmd[actionPositive][]" autocomplete="off">
+                                        </div>
+                                        <div class="input-group">
+                                            <input style="width:150px;" type="text" disabled="disabled" class="form-control m-input" value="Solde && Action > 0" autocomplete="off">
+                                            <input type="text" class="form-control m-input w-75" value=""  name="cronRewardCmd[soldActionPositive][]" autocomplete="off">
+                                        </div>
+                                        <div class="input-group">
+                                            <input style="width:150px;" type="text" disabled="disabled" class="form-control m-input" value="Multiplicateur" autocomplete="off">
+                                            <input type="text" class="form-control m-input w-75" value=""  name="cronRewardCmd[unit][]" autocomplete="off">
+                                        </div>
+                                        <div class="m-2"><button id="removeRow" type="button" class="btn btn-danger float-right">Supprimer</button></div>
+                                        <div class="clearfix"></div>
+                                        <hr class="sidebar-divider border-bottom-info">
+                                    </div>
+            `
+        $('#newAutoRecompense').append(html);
+    });
+    // remove row
+    $(document).on('click', '#removeRow', function () {
+        $(this).closest('#inputFormRow').remove();
+    });
+</script>
 </body>
 </html>
 

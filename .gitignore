@@ -5,5 +5,7 @@
 *.log
 log/
 config/*
+bdd/*
 .DS_Store
 .vscode
+/server/web/.sass-cache/

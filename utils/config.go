@@ -4,12 +4,15 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"superdicobot/internal/logger"
 )
 
 type Config struct {
 	LoggerLevel string    `mapstructure:"loggerLevel"`
 	LoggerFile  string    `mapstructure:"loggerFile"`
+	BddPath     string    `mapstructure:"bddPath"`
 	Bots        []Bot     `mapstructure:"bots"`
+	EventSub    EventSub  `mapstructure:"eventSub"`
 	Webserver   Webserver `mapstructure:"webserver"`
 }
 
@@ -21,6 +24,7 @@ type Webserver struct {
 type Oauth struct {
 	ClientId         string   `mapstructure:"clientId"`
 	ClientSecret     string   `mapstructure:"clientSecret"`
+	AppToken         string   `mapstructure:"appToken"`
 	Scopes           []string `mapstructure:"scopes"`
 	RedirectURL      string   `mapstructure:"redirectUrl"`
 	CookieSecret     string   `mapstructure:"cookieSecret"`
@@ -39,12 +43,24 @@ type Bot struct {
 }
 
 type ChannelConfig struct {
-	Channel            string `mapstructure:"channel"`
-	UnTimeoutCmd       string `mapstructure:"unTimeoutCmd"`
-	PingCmd            string `mapstructure:"pingCmd"`
-	MaxTimeoutDuration int    `mapstructure:"maxTimeoutDuration"`
-	LoggerLevel        string `mapstructure:"loggerLevel"`
-	LoggerFile         string `mapstructure:"loggerFile"`
+	Channel            string                `mapstructure:"channel"`
+	UserId             string                `mapstructure:"userId"`
+	UnTimeoutCmd       string                `mapstructure:"unTimeoutCmd"`
+	PingCmd            string                `mapstructure:"pingCmd"`
+	MaxTimeoutDuration int                   `mapstructure:"maxTimeoutDuration"`
+	LoggerLevel        string                `mapstructure:"loggerLevel"`
+	LoggerFile         string                `mapstructure:"loggerFile"`
+	EventSub           EventSubChannelConfig `mapstructure:"eventSub"`
+}
+
+type EventSubChannelConfig struct {
+	ClientId string   `mapstructure:"clientId"`
+	Events   []string `mapstructure:"events"`
+}
+
+type EventSub struct {
+	WebhookSecret string `mapstructure:"webhookSecret"`
+	Callback      string `mapstructure:"callback"`
 }
 
 // LoadConfig reads configuration from file or environment variables.
@@ -64,9 +80,10 @@ func LoadConfig(path string) (config Config, err error) {
 	return
 }
 
-func ConfigMiddleware(config Config) func(ctx *gin.Context) {
+func ConfigMiddleware(config Config, logger logger.LogWrapperObj) func(ctx *gin.Context) {
 	return func(c *gin.Context) {
 		c.Set("config", config)
+		c.Set("logger", logger)
 		c.Next()
 	}
 }

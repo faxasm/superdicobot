@@ -1,10 +1,12 @@
 package logger
 
 import (
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type LogWrapperObj struct {
@@ -68,4 +70,40 @@ func (logWrapper LogWrapperObj) Error(message string, fields ...zap.Field) {
 
 func (logWrapper LogWrapperObj) Fatal(message string, fields ...zap.Field) {
 	logWrapper.Logger.Desugar().Fatal(message, fields...)
+}
+
+func GinZap(logger LogWrapperObj, timeFormat string, utc bool, alwaysLog bool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		// some evil middlewares modify this values
+		path := c.Request.URL.Path
+		query := c.Request.URL.RawQuery
+		c.Next()
+
+		end := time.Now()
+		latency := end.Sub(start)
+		if utc {
+			end = end.UTC()
+		}
+
+		if len(c.Errors) > 0 {
+			// Append error field if this is an erroneous request.
+			for _, e := range c.Errors.Errors() {
+				logger.Error(e)
+			}
+		} else {
+			if alwaysLog || c.Writer.Status() >= 300 {
+				logger.Info(path,
+					zap.Int("status", c.Writer.Status()),
+					zap.String("method", c.Request.Method),
+					zap.String("path", path),
+					zap.String("query", query),
+					zap.String("ip", c.ClientIP()),
+					zap.String("user-agent", c.Request.UserAgent()),
+					zap.String("time", end.Format(timeFormat)),
+					zap.Duration("latency", latency),
+				)
+			}
+		}
+	}
 }
