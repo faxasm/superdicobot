@@ -138,6 +138,18 @@ func PostChannel(c *gin.Context) {
 
 	hotConfig.Activate = activeBot
 
+	unTimeoutCmd := form["unTimeout[cmd]"][0]
+	unTimeoutMaxDuration := form["unTimeout[maxTimeout]"][0]
+
+	unTimeoutMaxDurationValue, err := strconv.Atoi(unTimeoutMaxDuration)
+	if err != nil {
+		unTimeoutMaxDurationValue = 0
+	}
+
+	hotConfig.UnTimeoutCmd = bdd.UnTimeoutCmd{
+		Cmd:                unTimeoutCmd,
+		MaxTimeoutDuration: unTimeoutMaxDurationValue,
+	}
 	aliases := form["customCmd[aliases][]"]
 	cmd := form["customCmd[cmd][]"]
 	coolDown := form["customCmd[coolDown][]"]

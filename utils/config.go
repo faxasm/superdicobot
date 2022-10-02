@@ -43,14 +43,12 @@ type Bot struct {
 }
 
 type ChannelConfig struct {
-	Channel            string                `mapstructure:"channel"`
-	UserId             string                `mapstructure:"userId"`
-	UnTimeoutCmd       string                `mapstructure:"unTimeoutCmd"`
-	PingCmd            string                `mapstructure:"pingCmd"`
-	MaxTimeoutDuration int                   `mapstructure:"maxTimeoutDuration"`
-	LoggerLevel        string                `mapstructure:"loggerLevel"`
-	LoggerFile         string                `mapstructure:"loggerFile"`
-	EventSub           EventSubChannelConfig `mapstructure:"eventSub"`
+	Channel     string                `mapstructure:"channel"`
+	UserId      string                `mapstructure:"userId"`
+	PingCmd     string                `mapstructure:"pingCmd"`
+	LoggerLevel string                `mapstructure:"loggerLevel"`
+	LoggerFile  string                `mapstructure:"loggerFile"`
+	EventSub    EventSubChannelConfig `mapstructure:"eventSub"`
 }
 
 type EventSubChannelConfig struct {

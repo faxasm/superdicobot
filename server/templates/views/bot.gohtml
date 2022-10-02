@@ -17,6 +17,24 @@
                             <label class="custom-control-label" for="customCheck1">Bot activé</label>
                         </div>
                         <hr class="sidebar-divider">
+
+                        <hr class="sidebar-divider">
+                        <h4>Untimeout en masse</h4>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div id="inputFormRow">
+                                    <div class="input-group">
+                                        <input style="width:150px;" type="text" disabled="disabled"  class="form-control m-input" value="Commande" autocomplete="off">
+                                        <input type="text" class="form-control m-input w-75" value="{{ .hotConfig.UnTimeoutCmd.Cmd }}"  name="unTimeout[cmd]" autocomplete="off">
+                                    </div>
+                                    <div class="input-group">
+                                        <input style="width:250px;" type="text" disabled="disabled"  class="form-control m-input" value="Durée max des timeout (secondes)" autocomplete="off">
+                                        <input type="text" class="form-control m-input w-75" value="{{ .hotConfig.UnTimeoutCmd.MaxTimeoutDuration }}"  name="unTimeout[maxTimeout]" autocomplete="off">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="sidebar-divider">
                         <h3>Commandes</h3>
                         <div class="border border-warning m-1 p-1">
                         <h4>Commandes Custom</h4>

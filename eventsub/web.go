@@ -30,7 +30,7 @@ func Subscribe(notify chan string, config utils.ChannelConfig, allConfig utils.C
 	}
 
 	if err != nil {
-		notify <- "erreur server: " + err.Error()
+		notify <- "error server: " + err.Error()
 	}
 
 	for _, event := range config.EventSub.Events {

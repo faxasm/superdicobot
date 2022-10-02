@@ -52,11 +52,9 @@ func (currentJobs *CronRewardJobs) HasDiffCronRewardCmds(cronJobs []bdd.CronRewa
 func NewChannelInstance(config utils.ChannelConfig, client *twitch.Client) ChannelInstance {
 
 	variableConfig := &utils.ChannelConfig{
-		Channel:            config.Channel,
-		UnTimeoutCmd:       config.UnTimeoutCmd,
-		PingCmd:            config.PingCmd,
-		MaxTimeoutDuration: config.MaxTimeoutDuration,
-		LoggerLevel:        config.LoggerLevel,
+		Channel:     config.Channel,
+		PingCmd:     config.PingCmd,
+		LoggerLevel: config.LoggerLevel,
 	}
 
 	Logger := logger.NewLogger(variableConfig.LoggerLevel, config.LoggerFile)
@@ -116,7 +114,12 @@ func NewBot(notify chan string, botConfig utils.Bot, allConfig utils.Config) {
 	client.OnClearChatMessage(func(message twitch.ClearChatMessage) {
 
 		channelInstance := channelInstances[message.Channel]
-		if message.BanDuration > 0 && message.BanDuration <= channelInstance.ChannelConfig.MaxTimeoutDuration {
+		hotConfig, err := bdd.GetBddConfig(allConfig, botConfig.User, message.Channel, Logger)
+		if err != nil {
+			Logger.Warn("unable to find bdd", zap.Error(err))
+			return
+		}
+		if message.BanDuration > 0 && message.BanDuration <= hotConfig.UnTimeoutCmd.MaxTimeoutDuration {
 			limit := message.Time.Unix() + int64(message.BanDuration)
 			channelInstance.TimeoutPool.Put(message.TargetUsername, message.TargetUserID, limit)
 			channelInstance.Logger.Info("timeout detected for", zap.Reflect("message", message))
@@ -190,7 +193,7 @@ func NewBot(notify chan string, botConfig utils.Bot, allConfig utils.Config) {
 				client.Reply(message.Channel, message.ID, "Pong !")
 			}
 
-			if message.Message == channelInstance.ChannelConfig.UnTimeoutCmd {
+			if message.Message == hotConfig.UnTimeoutCmd.Cmd {
 				if channelInstance.TimeoutPool.Len() > 0 {
 					channelInstance.Logger.Info("Untimeout detected",
 						zap.String("channel", message.Channel),
