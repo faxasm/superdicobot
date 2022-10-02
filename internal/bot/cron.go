@@ -5,7 +5,6 @@ import (
 	"github.com/go-co-op/gocron"
 	"github.com/nicklaw5/helix/v2"
 	"go.uber.org/zap"
-	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -50,6 +49,16 @@ func CronJob(allConfig utils.Config, botConfig utils.Bot, channelInstance Channe
 				}
 				channelInstance.CronTask.Scheduler.Every(newJob.Period).Seconds().Do(
 					func(newJob bdd.CronRewardCmd) {
+
+						hotConfig, err := bdd.GetBddConfig(allConfig, botConfig.User, channelInstance.ChannelConfig.Channel, Logger)
+						if err != nil {
+							Logger.Warn("unable to find bdd", zap.Error(err))
+							return
+						}
+						if !hotConfig.Activate {
+							//deactivated bot
+							return
+						}
 
 						channel := channelInstance.ChannelConfig.Channel
 						Logger.Info("is online ?", zap.Reflect("resp", *channelInstance.IsOnline))
@@ -165,13 +174,11 @@ func CheckChannelStatus(allConfig utils.Config, botConfig utils.Bot, channelInst
 		}
 
 		for _, channelInstance := range channelInstances {
-			t := rand.Intn(2)
-			isOnline := t == 1
+			isOnline := StringInSlice(channelInstance.ChannelConfig.Channel, channelsOnline)
 			Logger.Info("chech online status for", zap.String("channel", channelInstance.ChannelConfig.Channel), zap.Bool("isOnline", isOnline))
 			if channelInstance.IsOnline != nil {
-				*channelInstance.IsOnline = StringInSlice(channelInstance.ChannelConfig.Channel, channelsOnline)
+				*channelInstance.IsOnline = isOnline
 			} else {
-				isOnline := StringInSlice(channelInstance.ChannelConfig.Channel, channelsOnline)
 				channelInstance.IsOnline = &isOnline
 			}
 		}
