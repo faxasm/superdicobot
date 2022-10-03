@@ -45,6 +45,7 @@ type Bot struct {
 type ChannelConfig struct {
 	Channel     string                `mapstructure:"channel"`
 	UserId      string                `mapstructure:"userId"`
+	Token       string                `mapstructure:"token"`
 	PingCmd     string                `mapstructure:"pingCmd"`
 	LoggerLevel string                `mapstructure:"loggerLevel"`
 	LoggerFile  string                `mapstructure:"loggerFile"`
@@ -82,6 +83,21 @@ func ConfigMiddleware(config Config, logger logger.LogWrapperObj) func(ctx *gin.
 	return func(c *gin.Context) {
 		c.Set("config", config)
 		c.Set("logger", logger)
+
+		if bot := c.Param("bot"); bot != "" {
+			for _, botConfig := range config.Bots {
+				if botConfig.User == bot {
+					c.Set("botConfig", botConfig)
+					if channel := c.Param("channel"); channel != "" {
+						for _, channelConfig := range botConfig.Channels {
+							if channelConfig.Channel == channel {
+								c.Set("channelConfig", channelConfig)
+							}
+						}
+					}
+				}
+			}
+		}
 		c.Next()
 	}
 }

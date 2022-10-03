@@ -56,7 +56,6 @@ func NewChannelInstance(config utils.ChannelConfig, client *twitch.Client) Chann
 		PingCmd:     config.PingCmd,
 		LoggerLevel: config.LoggerLevel,
 	}
-
 	Logger := logger.NewLogger(variableConfig.LoggerLevel, config.LoggerFile)
 	TimeoutPool := userpool.New(0, variableConfig.Channel, client)
 	messageCoolDown := userpool.NewCmdPool(0)
@@ -85,7 +84,6 @@ func NewBot(notify chan string, botConfig utils.Bot, allConfig utils.Config) {
 
 	channelInstances := make(map[string]ChannelInstance, len(botConfig.Channels))
 	for _, channelConfig := range botConfig.Channels {
-		Logger.Error("debug", zap.Reflect("chanConfig", channelConfig))
 		channelInstances[channelConfig.Channel] = NewChannelInstance(channelConfig, client)
 		channels = append(channels, channelConfig.Channel)
 		Logger.Info("start", zap.String("config channel", channelConfig.Channel))

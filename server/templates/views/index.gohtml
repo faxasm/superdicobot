@@ -3,7 +3,20 @@
         <!-- /.container-fluid -->
 
         <div class="row">
-            <h2> MAIN PAGE </h2>
+            <div class="m-4 col-lg mb-4">
+
+            <h2> Configuration </h2>
+                {{range $bot := .config.Bots }}
+                        <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                            <div class="bg-white py-2 collapse-inner rounded">
+                                <h6 class="collapse-header">Channels:</h6>
+                                {{range $channel := $bot.Channels }}
+                                    <a class="collapse-item" href="/admin/{{$bot.User}}/{{$channel.Channel}}">{{$channel.Channel}}</a>
+                                {{ end }}
+                            </div>
+                        </div>
+                {{ end }}
+            </div>
         </div>
 
         </div>

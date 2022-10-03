@@ -1,0 +1,38 @@
+{{ define "views/rewards.gohtml"}}
+     {{ template "layouts/top.gohtml" .}}
+        <!-- /.container-fluid -->
+
+        <div class="row">
+            <div class="m-4 col-lg mb-4">
+            <h2> Récompenses </h2>
+            </div>
+
+            <table class="table m-3">
+                <thead>
+                <tr>
+                    <th scope="col" style="width: 600px;">id</th>
+                    <th scope="col">Titre</th>
+                    <th scope="col">Activé</th>
+                    <th scope="col">Handle</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{ $currentBot := .currentBot }}
+                {{ $currentChannel := .currentChannel }}
+                {{ range $reward := .rewards }}
+                <tr>
+                    <td>{{ $reward.ID }}</td>
+                    <td>{{ $reward.Title }}</td>
+                    <td>{{ if eq $reward.IsEnabled true }}Oui{{ else }}Non{{ end }}</td>
+                    <td><a href="/admin/{{$currentBot}}/{{$currentChannel}}/rewards/{{ $reward.ID }}">Voir l'historique</a></td>
+                </tr>
+                {{ end }}
+
+                </tbody>
+            </table>
+        </div>
+
+        </div>
+     {{ template "layouts/bottom.gohtml" .}}
+
+{{ end }}

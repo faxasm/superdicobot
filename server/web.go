@@ -61,6 +61,8 @@ func LaunchServer(notify chan string, config utils.Config, Logger logger.LogWrap
 	restricted.GET("/:bot/:channel", handlers.Channel)
 	restricted.POST("/:bot/:channel", handlers.PostChannel)
 
+	restricted.GET("/:bot/:channel/rewards", handlers.Rewards)
+
 	var err error
 	if len(config.Webserver.Hosts) > 0 {
 		err = autotls.Run(r, config.Webserver.Hosts...)

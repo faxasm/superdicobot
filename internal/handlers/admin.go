@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/nicklaw5/helix/v2"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 	"superdicobot/internal/bdd"
@@ -72,6 +74,7 @@ func Channel(c *gin.Context) {
 			"currentBot":     botName,
 			"currentChannel": channel,
 			"hotConfig":      hotConfig,
+			"isConfig":       true,
 		},
 	)
 }
@@ -274,6 +277,80 @@ func PostChannel(c *gin.Context) {
 			"currentBot":     botName,
 			"currentChannel": channel,
 			"hotConfig":      hotConfig,
+			"isConfig":       true,
+		},
+	)
+}
+
+func Rewards(c *gin.Context) {
+	//c.String(200, csrf.GetToken(c))
+	channel := c.Param("channel")
+	botName := c.Param("bot")
+	user := c.Value("user").(string)
+	config := c.Value("config").(utils.Config)
+	channelConfig := c.Value("channelConfig").(utils.ChannelConfig)
+	Logger := c.Value("logger").(logger.LogWrapperObj)
+	safeConfig := utils.GetSafeConfig(config, user)
+	botConfig, err := utils.GetBot(config, botName)
+	if err != nil {
+		c.HTML(
+			http.StatusNotFound,
+			"views/404.gohtml",
+			gin.H{
+				"user":           user,
+				"config":         safeConfig,
+				"currentBot":     "",
+				"currentChannel": "",
+			},
+		)
+		return
+	}
+
+	if !oauth.SecureRoute(user, channel, botConfig.Administrator) {
+		c.HTML(
+			http.StatusNotFound,
+			"views/404.gohtml",
+			gin.H{
+				"user":           user,
+				"config":         safeConfig,
+				"currentBot":     "",
+				"currentChannel": "",
+			},
+		)
+		return
+	}
+	hotConfig, err := bdd.GetBddConfig(config, botName, channel, Logger)
+
+	channelApiClient, err := helix.NewClient(&helix.Options{
+		ClientID:        config.Webserver.Oauth.ClientId,
+		ClientSecret:    config.Webserver.Oauth.ClientSecret,
+		AppAccessToken:  config.Webserver.Oauth.AppToken,
+		UserAccessToken: channelConfig.Token,
+	})
+	if err != nil {
+		Logger.Error("client is OUT", zap.Error(err))
+		//panic("out apiClient is down" + err.Error())
+	}
+	resp, err := channelApiClient.GetCustomRewards(&helix.GetCustomRewardsParams{
+		BroadcasterID: channelConfig.UserId,
+	})
+	if err != nil {
+		Logger.Warn("error with api", zap.Error(err))
+	}
+
+	Logger.Info("error with api", zap.Reflect("data", resp.Data))
+
+	c.HTML(
+		http.StatusOK,
+		"views/rewards.gohtml",
+		gin.H{
+			"user":           user,
+			"config":         safeConfig,
+			"currentBot":     botName,
+			"currentChannel": channel,
+			"hotConfig":      hotConfig,
+			"rewards":        resp.Data.ChannelCustomRewards,
+			"isReward":       true,
 		},
 	)
 }

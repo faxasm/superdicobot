@@ -31,18 +31,27 @@
     <!-- Nav Item - Pages Collapse Menu -->
     {{ $currentBot := .currentBot }}
     {{ $currentChannel := .currentChannel }}
+    {{ $isConfig := .isConfig }}
+    {{ $isReward := .isReward }}
     {{range $bot := .config.Bots }}
     <li class="nav-item">
-        <a class="nav-link {{ if ne $bot.User $currentBot }} collapsed {{ end }}" href="#" data-toggle="collapse" data-target="#collapseTwo"
+        <a class="nav-link" href="#" data-toggle="collapse" data-target="#collapseTwo"
            aria-expanded="true" aria-controls="collapseTwo">
             <i class="fas fa-fw fa-cog"></i>
             <span>{{ $bot.User }}</span>
         </a>
-        <div id="collapseTwo" class="collapse{{ if eq $bot.User $currentBot }} show{{ end }}" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+        <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <h6 class="collapse-header">Channels:</h6>
                 {{range $channel := $bot.Channels }}
                     <a class="collapse-item" {{ if eq $channel.Channel $currentChannel }}style="background: #e9aa0b;" {{ end }} href="/admin/{{$bot.User}}/{{$channel.Channel}}">{{$channel.Channel}}</a>
+                    <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" {{ if eq $channel.Channel $currentChannel }}{{ if $isConfig }} style="background: #e9aa0b;" {{ end }}{{ end }} href="/admin/{{$bot.User}}/{{$channel.Channel}}">Configuration</a>
+                            <a class="collapse-item" {{ if eq $channel.Channel $currentChannel }} {{ if $isReward }}  style="background: #e9aa0b;" {{ end }}{{ end }} href="/admin/{{$bot.User}}/{{$channel.Channel}}/rewards">Récompenses</a>
+                        </div>
+                    </div>
+
                 {{ end }}
             </div>
         </div>
