@@ -153,6 +153,7 @@ func ExecuteRewardRedemptionUpdate(c *gin.Context, notification EventSubNotifica
 		event.UserName,
 		event.RedeemedAt.Format(time.RFC3339),
 		event.Status,
+		event.ID,
 	}
 	var m sync.Mutex
 	m.Lock()

@@ -62,6 +62,7 @@ func LaunchServer(notify chan string, config utils.Config, Logger logger.LogWrap
 	restricted.POST("/:bot/:channel", handlers.PostChannel)
 
 	restricted.GET("/:bot/:channel/rewards", handlers.Rewards)
+	restricted.GET("/:bot/:channel/rewards/:rewardId", handlers.Redeems)
 
 	var err error
 	if len(config.Webserver.Hosts) > 0 {

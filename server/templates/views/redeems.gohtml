@@ -1,0 +1,40 @@
+{{ define "views/redeems.gohtml"}}
+     {{ template "layouts/top.gohtml" .}}
+        <!-- /.container-fluid -->
+
+        <div class="row">
+            <div class="m-4 col-lg mb-4">
+            <h2> Redeams </h2>
+            </div>
+
+            <table class="table m-3">
+                <thead>
+                <tr>
+                    <th scope="col" style="width: 200px;">Nom</th>
+                    <th scope="col">UserId</th>
+                    <th scope="col">UserName</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Statut</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{ $currentBot := .currentBot }}
+                {{ $currentChannel := .currentChannel }}
+                {{ range $redeem := .redeems }}
+                <tr>
+                    <td>{{ index $redeem 2}}</td>
+                    <td>{{ index $redeem 4}}</td>
+                    <td>{{ index $redeem 6}}</td>
+                    <td>{{ index $redeem 7}}</td>
+                    <td>{{ index $redeem 8}}</td>
+                </tr>
+                {{ end }}
+
+                </tbody>
+            </table>
+        </div>
+
+        </div>
+     {{ template "layouts/bottom.gohtml" .}}
+
+{{ end }}

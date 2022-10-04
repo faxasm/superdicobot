@@ -1,15 +1,18 @@
 package handlers
 
 import (
+	"encoding/csv"
 	"github.com/gin-gonic/gin"
 	"github.com/nicklaw5/helix/v2"
 	"go.uber.org/zap"
 	"net/http"
+	"os"
 	"strconv"
 	"superdicobot/internal/bdd"
 	"superdicobot/internal/logger"
 	"superdicobot/internal/oauth"
 	"superdicobot/utils"
+	"sync"
 )
 
 func Root(c *gin.Context) {
@@ -350,6 +353,83 @@ func Rewards(c *gin.Context) {
 			"currentChannel": channel,
 			"hotConfig":      hotConfig,
 			"rewards":        resp.Data.ChannelCustomRewards,
+			"isReward":       true,
+		},
+	)
+}
+
+func Redeems(c *gin.Context) {
+	//c.String(200, csrf.GetToken(c))
+	channel := c.Param("channel")
+	botName := c.Param("bot")
+	user := c.Value("user").(string)
+	config := c.Value("config").(utils.Config)
+	//channelConfig := c.Value("channelConfig").(utils.ChannelConfig)
+	rewardId := c.Param("rewardId")
+	Logger := c.Value("logger").(logger.LogWrapperObj)
+	safeConfig := utils.GetSafeConfig(config, user)
+	botConfig, err := utils.GetBot(config, botName)
+	if err != nil {
+		c.HTML(
+			http.StatusNotFound,
+			"views/404.gohtml",
+			gin.H{
+				"user":           user,
+				"config":         safeConfig,
+				"currentBot":     "",
+				"currentChannel": "",
+			},
+		)
+		return
+	}
+
+	if !oauth.SecureRoute(user, channel, botConfig.Administrator) {
+		c.HTML(
+			http.StatusNotFound,
+			"views/404.gohtml",
+			gin.H{
+				"user":           user,
+				"config":         safeConfig,
+				"currentBot":     "",
+				"currentChannel": "",
+			},
+		)
+		return
+	}
+	hotConfig, err := bdd.GetBddConfig(config, botName, channel, Logger)
+
+	filePath := config.BddPath + "/events/" + channel + "/rewards/" + rewardId + ".csv"
+	var m sync.Mutex
+	m.Lock()
+	f, err := os.Open(filePath)
+	if err != nil {
+		Logger.Error("Unable to read input file "+filePath, zap.Error(err))
+		if err := f.Close(); err != nil {
+			Logger.Error("Unable to close input file "+filePath, zap.Error(err))
+		}
+	}
+
+	csvReader := csv.NewReader(f)
+	records, err := csvReader.ReadAll()
+	if err := f.Close(); err != nil {
+		Logger.Error("Unable to close input file "+filePath, zap.Error(err))
+	}
+	m.Unlock()
+	if err != nil {
+		Logger.Error("Unable to read input file "+filePath, zap.Error(err))
+	}
+
+	Logger.Info("test", zap.Reflect("records", records))
+	c.HTML(
+		http.StatusOK,
+		"views/redeems.gohtml",
+		gin.H{
+			"user":           user,
+			"config":         safeConfig,
+			"currentBot":     botName,
+			"currentChannel": channel,
+			"hotConfig":      hotConfig,
+			"redeems":        records,
 			"isReward":       true,
 		},
 	)
