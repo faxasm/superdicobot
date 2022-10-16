@@ -57,7 +57,7 @@
                             {{ range $customCmd := .hotConfig.CustomCmds }}
                                 <div id="inputFormRow">
                                     <div class="input-group mb-3">
-                                        <input style="width:150px;" type="text" name="customCmd[aliases][]" value="{{index $customCmd.Aliases 0}}" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                                        <textarea style="width:150px;" type="text" name="customCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">{{StringsJoin $customCmd.Aliases "\n"}}</textarea>
                                         <input type="text" name="customCmd[cmd][]" value="{{$customCmd.Cmd }}" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
                                         <input style="width:50px;" type="text" name="customCmd[coolDown][]"  value="{{$customCmd.CoolDown }}" class="form-control m-input" placeholder="CoolDown" autocomplete="off">
                                         <select class="custom-select"
@@ -77,6 +77,15 @@
                                 <button id="addRow" type="button" class="btn btn-info  float-right">Ajouter une commande</button>
                             </div>
                         </div>
+                            <div>
+                                <ul>
+                                    <li>{{"{{"}}followerCount{{"}}"}} : Nombre de followers</li>
+                                    <li>{{"{{"}}subCount{{"}}"}} : Nombre de sub</li>
+                                    <li>{{"{{"}}viewerCount{{"}}"}} : Nombre de viewers</li>
+                                    <li>{{"{{"}}streamDuration{{"}}"}} : Durée de stream</li>
+                                    <li>{{"{{"}}lastSubDuration{{"}}"}} : Durée depuis le dernier sub</li>
+                                </ul>
+                            </div>
                     </div>
 
                         <div class="border border-warning m-1 p-1">
@@ -101,7 +110,7 @@
                                 {{ range $rewardCmd := .hotConfig.RewardCmds }}
                                     <div id="inputFormRow">
                                         <div class="input-group mb-3">
-                                            <input style="width:150px;" type="text" name="rewardCmd[aliases][]" value="{{index $rewardCmd.Aliases 0}}" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                                            <textarea style="width:150px;" type="text" name="rewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">{{StringsJoin $rewardCmd.Aliases "\n"}}</textarea>
                                             <input type="text" name="rewardCmd[cmd][]" value="{{$rewardCmd.Cmd }}" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
                                             <input style="width:50px;" type="text" name="rewardCmd[coolDown][]"  value="{{$rewardCmd.CoolDown }}" class="form-control m-input" placeholder="Cooldown" autocomplete="off">
                                             <input style="width:50px;" type="text" name="rewardCmd[id][]"  value="{{$rewardCmd.Id }}" class="form-control m-input" placeholder="Id" autocomplete="off">
@@ -145,7 +154,7 @@
                                 {{ range $rewardCmd := .hotConfig.LastRewardCmds }}
                                     <div id="inputFormRow">
                                         <div class="input-group mb-3">
-                                            <input style="width:150px;" type="text" name="lastRewardCmd[aliases][]" value="{{index $rewardCmd.Aliases 0}}" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                                            <textarea style="width:150px;" type="text" name="lastRewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">{{StringsJoin $rewardCmd.Aliases "\n"}}</textarea>
                                             <input type="text" name="lastRewardCmd[cmd][]" value="{{$rewardCmd.Cmd }}" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
                                             <input style="width:50px;" type="text" name="lastRewardCmd[coolDown][]"  value="{{$rewardCmd.CoolDown }}" class="form-control m-input" placeholder="Cooldown" autocomplete="off">
                                             <input style="width:50px;" type="text" name="lastRewardCmd[id][]"  value="{{$rewardCmd.Id }}" class="form-control m-input" placeholder="Id" autocomplete="off">
@@ -192,7 +201,7 @@
                                 {{ range $rewardCmd := .hotConfig.SoldRewardCmds }}
                                     <div id="inputFormRow">
                                         <div class="input-group mb-3">
-                                            <input style="width:150px;" type="text" name="soldRewardCmd[aliases][]" value="{{index $rewardCmd.Aliases 0}}" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                                            <textarea style="width:150px;" type="text" name="soldRewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">{{StringsJoin $rewardCmd.Aliases "\n"}}</textarea>
                                             <input type="text" name="soldRewardCmd[cmd][]" value="{{$rewardCmd.Cmd }}" class="form-control m-input w-50 " placeholder="Enter cmd" autocomplete="off">
                                             <input style="width:50px;" type="text" name="soldRewardCmd[coolDown][]"  value="{{$rewardCmd.CoolDown }}" class="form-control m-input" placeholder="Cooldown" autocomplete="off">
                                             <input style="width:50px;" type="text" name="soldRewardCmd[id][]"  value="{{$rewardCmd.Id }}" class="form-control m-input" placeholder="Id" autocomplete="off">
@@ -214,6 +223,56 @@
                                 <button id="addRowSoldRecompense" type="button" class="btn btn-info  float-right">Ajouter une commande de solde de récompense</button>
                             </div>
                         </div>
+
+                        </div>
+                        <hr class="sidebar-divider border-bottom-dark">
+
+
+                        <div class="border border-warning m-1 p-1">
+                            <h4>Commandes Total récompense</h4>
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div id="inputFormRow">
+                                        <div class="input-group mb-3">
+                                            <input style="width:150px;" type="text" disabled="disabled" class="form-control m-input" value="Alias" autocomplete="off">
+                                            <input type="text" disabled="disabled"  class="form-control m-input w-50" value="Commande" autocomplete="off">
+                                            <input style="width:50px;" type="text" disabled="disabled"  class="form-control m-input" value="Cooldown" autocomplete="off">
+                                            <input style="width:50px;" type="text" disabled="disabled" class="form-control m-input" value="Code récompense" autocomplete="off">
+                                            <input style="width:30px;" type="text" disabled="disabled"  class="form-control m-input" value="Multiplicateur" autocomplete="off">
+                                            <select class="custom-select" disabled="disabled"
+                                                    style="width:150px;" >
+                                                <option selected="selected">Autorisation</option>
+                                            </select>
+                                            <div class="input-group-append">
+                                                <button id="removeRow" type="button" disabled="disabled" class="btn">-----------</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {{ range $rewardCmd := .hotConfig.TotalRewardCmds }}
+                                        <div id="inputFormRow">
+                                            <div class="input-group mb-3">
+                                                <textarea style="width:150px;" type="text" name="totalRewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">{{StringsJoin $rewardCmd.Aliases "\n"}}</textarea>
+                                                <input type="text" name="totalRewardCmd[cmd][]" value="{{$rewardCmd.Cmd }}" class="form-control m-input w-50 " placeholder="Enter cmd" autocomplete="off">
+                                                <input style="width:50px;" type="text" name="totalRewardCmd[coolDown][]"  value="{{$rewardCmd.CoolDown }}" class="form-control m-input" placeholder="Cooldown" autocomplete="off">
+                                                <input style="width:50px;" type="text" name="totalRewardCmd[id][]"  value="{{$rewardCmd.Id }}" class="form-control m-input" placeholder="Id" autocomplete="off">
+                                                <input style="width:30px;" type="text" name="totalRewardCmd[unit][]"  value="{{$rewardCmd.Unit }}" class="form-control m-input" placeholder="Id" autocomplete="off">
+                                                <select class="custom-select"
+                                                        style="width:150px;" name="totalRewardCmd[user][]">
+                                                    <option {{if eq $rewardCmd.User "streamer"}} selected="selected" {{ end }} value="streamer">Streameur</option>
+                                                    <option {{if eq $rewardCmd.User "moderator"}} selected="selected" {{ end }} value="moderator" >Moderateur</option>
+                                                    <option {{if eq $rewardCmd.User "all"}} selected="selected" {{ end }} value="all">Tous</option>
+                                                </select>
+                                                <div class="input-group-append">
+                                                    <button id="removeRow" type="button" class="btn btn-danger">Supprimer</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {{ end }}
+
+                                    <div id="newRowTotalRecompense" class="mb-1"></div>
+                                    <button id="addRowTotalRecompense" type="button" class="btn btn-info  float-right">Ajouter une commande de totale de récompense</button>
+                                </div>
+                            </div>
 
                         </div>
                         <hr class="sidebar-divider border-bottom-dark">

@@ -64,6 +64,12 @@ func EventCallback(c *gin.Context) {
 	case "channel.ban":
 		ExecuteBan(c, vals)
 		return
+	case "channel.subscription.message":
+		ExecuteChannelSubscribeMessage(c, vals)
+		return
+	case "channel.subscription.gift":
+		ExecuteChannelSubscribeGift(c, vals)
+		return
 	}
 	//err = json.NewDecoder(bytes.NewReader(vals.Event)).Decode(&followEvent)
 
@@ -87,6 +93,8 @@ func ExecuteRewardRedemption(c *gin.Context, notification EventSubNotification) 
 	reward := event.Reward.ID
 	filePath := config.BddPath + "/events/" + channel + "/rewards/" + reward + ".csv"
 
+	now := time.Now()
+
 	column := []string{
 		channel,
 		reward,
@@ -97,6 +105,8 @@ func ExecuteRewardRedemption(c *gin.Context, notification EventSubNotification) 
 		event.UserName,
 		event.RedeemedAt.Format(time.RFC3339),
 		event.Status,
+		event.ID,
+		now.Format(time.RFC3339),
 	}
 	var m sync.Mutex
 	m.Lock()
@@ -143,6 +153,7 @@ func ExecuteRewardRedemptionUpdate(c *gin.Context, notification EventSubNotifica
 	reward := event.Reward.ID
 	filePath := config.BddPath + "/events/" + channel + "/rewards/" + reward + ".csv"
 
+	now := time.Now()
 	column := []string{
 		channel,
 		reward,
@@ -154,6 +165,7 @@ func ExecuteRewardRedemptionUpdate(c *gin.Context, notification EventSubNotifica
 		event.RedeemedAt.Format(time.RFC3339),
 		event.Status,
 		event.ID,
+		now.Format(time.RFC3339),
 	}
 	var m sync.Mutex
 	m.Lock()
@@ -193,4 +205,121 @@ func ExecuteBan(c *gin.Context, notification EventSubNotification) {
 	Logger.Info("ban event", zap.ByteString("event", b))
 	c.Writer.WriteHeader(200)
 	c.Writer.Write([]byte("ok"))
+}
+
+func ExecuteChannelSubscribeMessage(c *gin.Context, notification EventSubNotification) {
+	config := c.Value("config").(utils.Config)
+	Logger := c.Value("logger").(logger.LogWrapperObj)
+
+	var event helix.EventSubChannelSubscriptionMessageEvent
+	b, _ := json.Marshal(notification.Event)
+	err := json.NewDecoder(bytes.NewReader(b)).Decode(&event)
+	if err != nil {
+		Logger.Error("unable to decode msg", zap.Error(err))
+		return
+	}
+	// push to file
+	channel := event.BroadcasterUserLogin
+	filePath := config.BddPath + "/events/" + channel + "/subs/messages.csv"
+
+	now := time.Now()
+
+	column := []string{
+		channel,
+		event.UserID,
+		event.UserLogin,
+		event.UserName,
+		event.Tier,
+		strconv.Itoa(event.CumulativeMonths),
+		strconv.Itoa(event.DurationMonths),
+		strconv.Itoa(event.StreakMonths),
+		now.Format(time.RFC3339),
+	}
+	var m sync.Mutex
+	m.Lock()
+	if filePath != "" {
+		_, err := os.Stat(filePath)
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+				panic(err)
+			}
+			_, err := os.Create(filePath)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		Logger.Error("fail to open bdd", zap.Error(err))
+	}
+	w := csv.NewWriter(f)
+	if err = w.Write(column); err != nil {
+		Logger.Error("fail to write on bdd", zap.Error(err))
+	}
+	w.Flush()
+	f.Close()
+	m.Unlock()
+	c.Writer.WriteHeader(200)
+	c.Writer.Write([]byte("ok"))
+
+}
+
+func ExecuteChannelSubscribeGift(c *gin.Context, notification EventSubNotification) {
+	config := c.Value("config").(utils.Config)
+	Logger := c.Value("logger").(logger.LogWrapperObj)
+
+	var event helix.EventSubChannelSubscriptionGiftEvent
+	b, _ := json.Marshal(notification.Event)
+	err := json.NewDecoder(bytes.NewReader(b)).Decode(&event)
+	if err != nil {
+		Logger.Error("unable to decode msg", zap.Error(err))
+		return
+	}
+	// push to file
+	channel := event.BroadcasterUserLogin
+	filePath := config.BddPath + "/events/" + channel + "/subs/gifts.csv"
+
+	now := time.Now()
+
+	column := []string{
+		channel,
+		event.UserID,
+		event.UserLogin,
+		event.UserName,
+		event.Tier,
+		strconv.Itoa(event.Total),
+		strconv.Itoa(event.CumulativeTotal),
+		strconv.FormatBool(event.IsAnonymous),
+		now.Format(time.RFC3339),
+	}
+
+	var m sync.Mutex
+	m.Lock()
+	if filePath != "" {
+		_, err := os.Stat(filePath)
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+				panic(err)
+			}
+			_, err := os.Create(filePath)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		Logger.Error("fail to open bdd", zap.Error(err))
+	}
+	w := csv.NewWriter(f)
+	if err = w.Write(column); err != nil {
+		Logger.Error("fail to write on bdd", zap.Error(err))
+	}
+	w.Flush()
+	f.Close()
+	m.Unlock()
+	c.Writer.WriteHeader(200)
+	c.Writer.Write([]byte("ok"))
+
 }

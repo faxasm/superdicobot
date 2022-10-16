@@ -4,14 +4,18 @@ import (
 	"encoding/csv"
 	"github.com/gin-gonic/gin"
 	"github.com/nicklaw5/helix/v2"
+	funk "github.com/thoas/go-funk"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
 	"superdicobot/internal/bdd"
 	"superdicobot/internal/logger"
 	"superdicobot/internal/oauth"
 	"superdicobot/utils"
+
 	"sync"
 )
 
@@ -164,8 +168,10 @@ func PostChannel(c *gin.Context) {
 	for i, alias := range aliases {
 
 		if alias != "" && cmd[i] != "" {
+			aliasList := strings.Split(strings.ReplaceAll(alias, "\r\n", "\n"), "\n")
+			aliasesOk := funk.Map(aliasList, func(item string) string { return strings.TrimSpace(item) }).([]string)
 			hotConfig.CustomCmds = append(hotConfig.CustomCmds, bdd.CustomCmd{
-				Aliases:  []string{alias},
+				Aliases:  aliasesOk,
 				Cmd:      cmd[i],
 				CoolDown: coolDown[i],
 				User:     userRole[i],
@@ -181,8 +187,10 @@ func PostChannel(c *gin.Context) {
 	hotConfig.RewardCmds = make([]bdd.RewardCmd, 0)
 	for i, alias := range aliasesReward {
 		if alias != "" && cmdReward[i] != "" {
+			aliasList := strings.Split(strings.ReplaceAll(alias, "\r\n", "\n"), "\n")
+			aliasesOk := funk.Map(aliasList, func(item string) string { return strings.TrimSpace(item) }).([]string)
 			hotConfig.RewardCmds = append(hotConfig.RewardCmds, bdd.RewardCmd{
-				Aliases:  []string{aliasesReward[i]},
+				Aliases:  aliasesOk,
 				Cmd:      cmdReward[i],
 				CoolDown: coolDownReward[i],
 				Id:       idReward[i],
@@ -199,8 +207,10 @@ func PostChannel(c *gin.Context) {
 	hotConfig.LastRewardCmds = make([]bdd.RewardCmd, 0)
 	for i, alias := range aliasesLastReward {
 		if alias != "" && cmdLastReward[i] != "" {
+			aliasList := strings.Split(strings.ReplaceAll(alias, "\r\n", "\n"), "\n")
+			aliasesOk := funk.Map(aliasList, func(item string) string { return strings.TrimSpace(item) }).([]string)
 			hotConfig.LastRewardCmds = append(hotConfig.LastRewardCmds, bdd.RewardCmd{
-				Aliases:  []string{aliasesLastReward[i]},
+				Aliases:  aliasesOk,
 				Cmd:      cmdLastReward[i],
 				CoolDown: coolDownLastReward[i],
 				Id:       idLastReward[i],
@@ -222,12 +232,40 @@ func PostChannel(c *gin.Context) {
 			unitValue = 1
 		}
 		if alias != "" && cmdSoldReward[i] != "" {
+			aliasList := strings.Split(strings.ReplaceAll(alias, "\r\n", "\n"), "\n")
+			aliasesOk := funk.Map(aliasList, func(item string) string { return strings.TrimSpace(item) }).([]string)
 			hotConfig.SoldRewardCmds = append(hotConfig.SoldRewardCmds, bdd.RewardCmd{
-				Aliases:  []string{aliasesSoldReward[i]},
+				Aliases:  aliasesOk,
 				Cmd:      cmdSoldReward[i],
 				CoolDown: coolDownSoldReward[i],
 				Id:       idSoldReward[i],
 				User:     userRoleSoldReward[i],
+				Unit:     unitValue,
+			})
+		}
+	}
+
+	aliasesTotalReward := form["totalRewardCmd[aliases][]"]
+	cmdTotalReward := form["totalRewardCmd[cmd][]"]
+	coolDownTotalReward := form["totalRewardCmd[coolDown][]"]
+	idTotalReward := form["totalRewardCmd[id][]"]
+	unitTotalReward := form["totalRewardCmd[unit][]"]
+	userRoleTotalReward := form["totalRewardCmd[user][]"]
+	hotConfig.TotalRewardCmds = make([]bdd.RewardCmd, 0)
+	for i, alias := range aliasesTotalReward {
+		unitValue, err := strconv.Atoi(unitTotalReward[i])
+		if err != nil {
+			unitValue = 1
+		}
+		if alias != "" && cmdTotalReward[i] != "" {
+			aliasList := strings.Split(strings.ReplaceAll(alias, "\r\n", "\n"), "\n")
+			aliasesOk := funk.Map(aliasList, func(item string) string { return strings.TrimSpace(item) }).([]string)
+			hotConfig.TotalRewardCmds = append(hotConfig.TotalRewardCmds, bdd.RewardCmd{
+				Aliases:  aliasesOk,
+				Cmd:      cmdTotalReward[i],
+				CoolDown: coolDownTotalReward[i],
+				Id:       idTotalReward[i],
+				User:     userRoleTotalReward[i],
 				Unit:     unitValue,
 			})
 		}
@@ -410,6 +448,8 @@ func Redeems(c *gin.Context) {
 	}
 
 	csvReader := csv.NewReader(f)
+	csvReader.FieldsPerRecord = -1
+
 	records, err := csvReader.ReadAll()
 	if err := f.Close(); err != nil {
 		Logger.Error("Unable to close input file "+filePath, zap.Error(err))
@@ -419,7 +459,11 @@ func Redeems(c *gin.Context) {
 		Logger.Error("Unable to read input file "+filePath, zap.Error(err))
 	}
 
-	Logger.Info("test", zap.Reflect("records", records))
+	//Logger.Info("test", zap.Reflect("records", records))
+	events := bdd.MapToEventsRewardId(records)
+	lastEvents := bdd.LastByRedeemId(events)
+	sort.Sort(lastEvents)
+
 	c.HTML(
 		http.StatusOK,
 		"views/redeems.gohtml",
@@ -429,7 +473,7 @@ func Redeems(c *gin.Context) {
 			"currentBot":     botName,
 			"currentChannel": channel,
 			"hotConfig":      hotConfig,
-			"redeems":        records,
+			"redeems":        lastEvents,
 			"isReward":       true,
 		},
 	)

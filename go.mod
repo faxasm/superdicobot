@@ -10,6 +10,7 @@ require (
 	github.com/go-co-op/gocron v1.17.0
 	github.com/nicklaw5/helix/v2 v2.7.2
 	github.com/spf13/viper v1.13.0
+	github.com/thoas/go-funk v0.9.2
 	go.uber.org/zap v1.17.0
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	gopkg.in/yaml.v3 v3.0.1

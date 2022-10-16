@@ -13,8 +13,9 @@
                     <th scope="col" style="width: 200px;">Nom</th>
                     <th scope="col">UserId</th>
                     <th scope="col">UserName</th>
-                    <th scope="col">Date</th>
+                    <th scope="col">Date Récompense</th>
                     <th scope="col">Statut</th>
+                    <th scope="col">Date maj</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -22,11 +23,12 @@
                 {{ $currentChannel := .currentChannel }}
                 {{ range $redeem := .redeems }}
                 <tr>
-                    <td>{{ index $redeem 2}}</td>
-                    <td>{{ index $redeem 4}}</td>
-                    <td>{{ index $redeem 6}}</td>
-                    <td>{{ index $redeem 7}}</td>
-                    <td>{{ index $redeem 8}}</td>
+                    <td>{{ $redeem.Name}}</td>
+                    <td>{{ $redeem.UserId}}</td>
+                    <td>{{ $redeem.UserName}}</td>
+                    <td>{{ LocalDate $redeem.DateEvent}}</td>
+                    <td>{{ $redeem.Status}}</td>
+                    <td>{{ LocalDate $redeem.UpdateAt}}</td>
                 </tr>
                 {{ end }}
 

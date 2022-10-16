@@ -34,7 +34,7 @@ func Subscribe(notify chan string, config utils.ChannelConfig, allConfig utils.C
 	}
 
 	for _, event := range config.EventSub.Events {
-		_, err = client.CreateEventSubSubscription(&helix.EventSubSubscription{
+		m, err := client.CreateEventSubSubscription(&helix.EventSubSubscription{
 			Type:    event,
 			Version: "1",
 			Condition: helix.EventSubCondition{
@@ -50,6 +50,7 @@ func Subscribe(notify chan string, config utils.ChannelConfig, allConfig utils.C
 			Logger.Error("unable to request create Sub", zap.Error(err))
 			notify <- "erreur server: " + err.Error()
 		}
+		Logger.Info("rawrespo", zap.Reflect("sub", m))
 	}
 
 }

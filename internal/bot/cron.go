@@ -15,11 +15,15 @@ import (
 	"time"
 )
 
+type CInfo struct {
+	start time.Time
+	count int
+}
+
 func CronJob(allConfig utils.Config, botConfig utils.Bot, channelInstance ChannelInstance) func() {
 
 	return func() {
 		Logger := channelInstance.Logger
-		Logger.Info("start channel cronJob configuration", zap.String("channel", channelInstance.ChannelConfig.Channel))
 
 		hotConfig, err := bdd.GetBddConfig(allConfig, botConfig.User, channelInstance.ChannelConfig.Channel, Logger)
 		if err != nil {
@@ -34,7 +38,6 @@ func CronJob(allConfig utils.Config, botConfig utils.Bot, channelInstance Channe
 		}
 
 		cronJobs := channelInstance.CronTask.CronRewardCmds
-		Logger.Info("check diff for cron")
 		if cronJobs.HasDiffCronRewardCmds(hotConfig.CronRewardCmds) {
 			Logger.Info("have diff for cron", zap.Reflect("crons", hotConfig.CronRewardCmds))
 			//rebootJobs()
@@ -43,7 +46,6 @@ func CronJob(allConfig utils.Config, botConfig utils.Bot, channelInstance Channe
 				channelInstance.CronTask.Scheduler.Stop()
 			}
 			for _, newJob := range hotConfig.CronRewardCmds {
-				Logger.Info("init new job")
 				if newJob.Period <= 0 {
 					break
 				}
@@ -61,7 +63,6 @@ func CronJob(allConfig utils.Config, botConfig utils.Bot, channelInstance Channe
 						}
 
 						channel := channelInstance.ChannelConfig.Channel
-						Logger.Info("is online ?", zap.Reflect("resp", *channelInstance.IsOnline))
 						if !*channelInstance.IsOnline {
 							return
 						}
@@ -77,6 +78,7 @@ func CronJob(allConfig utils.Config, botConfig utils.Bot, channelInstance Channe
 						}
 
 						csvReader := csv.NewReader(f)
+						csvReader.FieldsPerRecord = -1
 						records, err := csvReader.ReadAll()
 						if err != nil {
 							Logger.Error("Unable to read input file "+filePath, zap.Error(err))
@@ -159,27 +161,42 @@ func CheckChannelStatus(allConfig utils.Config, botConfig utils.Bot, channelInst
 		channels = append(channels, ch)
 	}
 	return func() {
-		resp, err := apiClient.SearchChannels(&helix.SearchChannelsParams{
-			Channel:  strings.Join(channels, ","),
-			First:    len(channels),
-			LiveOnly: true,
+
+		resp, err := apiClient.GetStreams(&helix.StreamsParams{
+			UserLogins: channels,
+			First:      len(channels),
 		})
 		if err != nil {
 			Logger.Warn("cant check online channels")
 			return
 		}
-		channelsOnline := make([]string, 0)
-		for _, channelResponse := range resp.Data.Channels {
-			channelsOnline = append(channelsOnline, channelResponse.BroadcasterLogin)
+
+		channelsOnline := make(map[string]CInfo, 0)
+		for _, channelResponse := range resp.Data.Streams {
+			channelsOnline[channelResponse.UserLogin] = CInfo{
+				start: channelResponse.StartedAt,
+				count: channelResponse.ViewerCount,
+			}
 		}
 
 		for _, channelInstance := range channelInstances {
-			isOnline := StringInSlice(channelInstance.ChannelConfig.Channel, channelsOnline)
-			Logger.Info("chech online status for", zap.String("channel", channelInstance.ChannelConfig.Channel), zap.Bool("isOnline", isOnline))
+			cInfo, isOnline := channelsOnline[channelInstance.ChannelConfig.Channel]
+			Logger.Info("startedAt", zap.String("channel", channelInstance.ChannelConfig.Channel),
+				zap.Time("started", cInfo.start),
+				zap.Int("viewers", cInfo.count))
 			if channelInstance.IsOnline != nil {
 				*channelInstance.IsOnline = isOnline
+				if isOnline {
+					*channelInstance.StartedAt = cInfo.start
+					*channelInstance.Viewers = cInfo.count
+				}
 			} else {
 				channelInstance.IsOnline = &isOnline
+				if isOnline {
+					channelInstance.StartedAt = &cInfo.start
+					channelInstance.Viewers = &cInfo.count
+
+				}
 			}
 		}
 

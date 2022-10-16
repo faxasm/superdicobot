@@ -11,13 +11,14 @@ import (
 )
 
 type BotHotConfig struct {
-	Activate       bool            `yaml:"activate"`
-	UnTimeoutCmd   UnTimeoutCmd    `yaml:"unTimeoutCmd"`
-	CustomCmds     []CustomCmd     `yaml:"customCmds"`
-	RewardCmds     []RewardCmd     `yaml:"rewardCmds"`
-	LastRewardCmds []RewardCmd     `yaml:"lastRewardCmds"`
-	SoldRewardCmds []RewardCmd     `yaml:"soldRewardCmds"`
-	CronRewardCmds []CronRewardCmd `yaml:"cronRewardCmds"`
+	Activate        bool            `yaml:"activate"`
+	UnTimeoutCmd    UnTimeoutCmd    `yaml:"unTimeoutCmd"`
+	CustomCmds      []CustomCmd     `yaml:"customCmds"`
+	RewardCmds      []RewardCmd     `yaml:"rewardCmds"`
+	LastRewardCmds  []RewardCmd     `yaml:"lastRewardCmds"`
+	SoldRewardCmds  []RewardCmd     `yaml:"soldRewardCmds"`
+	TotalRewardCmds []RewardCmd     `yaml:"totalRewardCmds"`
+	CronRewardCmds  []CronRewardCmd `yaml:"cronRewardCmds"`
 }
 
 type UnTimeoutCmd struct {

@@ -50,7 +50,7 @@
         let html = `
                 <div id="inputFormRow">
                     <div class="input-group mb-3">
-                        <input style="width:150px;" type="text" name="customCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                        <textarea style="width:150px;" type="text" name="customCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off"></textarea>
                         <input type="text" name="customCmd[cmd][]" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
                         <input style="width:50px;" type="text" name="customCmd[coolDown][]" class="form-control m-input" placeholder="CoolDown" autocomplete="off">
                         <select class="custom-select"
@@ -75,7 +75,7 @@
         let html = `
                                     <div id="inputFormRow">
                                         <div class="input-group mb-3">
-                                            <input style="width:150px;" type="text" name="rewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                                            <textarea style="width:150px;" type="text" name="rewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off"></textarea>
                                             <input type="text" name="rewardCmd[cmd][]" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
                                             <input style="width:50px;" type="text" name="rewardCmd[coolDown][]"   class="form-control m-input" placeholder="CoolDown" autocomplete="off">
                                             <input style="width:50px;" type="text" name="rewardCmd[id][]"  class="form-control m-input" placeholder="Id" autocomplete="off">
@@ -101,7 +101,7 @@
         let html = `
                                     <div id="inputFormRow">
                                         <div class="input-group mb-3">
-                                            <input style="width:150px;" type="text" name="lastRewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                                            <textarea style="width:150px;" type="text" name="lastRewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off"></textarea>
                                             <input type="text" name="lastRewardCmd[cmd][]" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
                                             <input style="width:50px;" type="text" name="lastRewardCmd[coolDown][]"   class="form-control m-input" placeholder="Cooldown" autocomplete="off">
                                             <input style="width:50px;" type="text" name="lastRewardCmd[id][]"  class="form-control m-input" placeholder="Id" autocomplete="off">
@@ -127,7 +127,7 @@
         let html = `
                                     <div id="inputFormRow">
                                         <div class="input-group mb-3">
-                                            <input style="width:150px;" type="text" name="soldRewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off">
+                                            <textarea style="width:150px;" type="text" name="soldRewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off"></textarea>
                                             <input type="text" name="soldRewardCmd[cmd][]" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
                                             <input style="width:50px;" type="text" name="soldRewardCmd[coolDown][]"   class="form-control m-input" placeholder="Cooldown" autocomplete="off">
                                             <input style="width:50px;" type="text" name="soldRewardCmd[id][]"  class="form-control m-input" placeholder="Id" autocomplete="off">
@@ -148,7 +148,33 @@
         $('#newRowSoldRecompense').append(html);
     });
 
+    //add Last Recompense row
+    // add row
+    $("#addRowTotalRecompense").click(function () {
+        let html = `
+                                    <div id="inputFormRow">
+                                        <div class="input-group mb-3">
+                                            <textarea style="width:150px;" type="text" name="totalRewardCmd[aliases][]" class="form-control m-input" placeholder="Enter aliases" autocomplete="off"></textarea>
+                                            <input type="text" name="totalRewardCmd[cmd][]" class="form-control m-input w-50" placeholder="Enter cmd" autocomplete="off">
+                                            <input style="width:50px;" type="text" name="totalRewardCmd[coolDown][]"   class="form-control m-input" placeholder="Cooldown" autocomplete="off">
+                                            <input style="width:50px;" type="text" name="totalRewardCmd[id][]"  class="form-control m-input" placeholder="Id" autocomplete="off">
+                                            <input style="width:30px;" type="text" name="totalRewardCmd[unit][]"  class="form-control m-input" placeholder="1" autocomplete="off">
+                                            <select class="custom-select"
+                                                    style="width:150px;" name="totalRewardCmd[user][]">
+                                                <option  value="streamer">Streameur</option>
+                                                <option  value="moderator" >Moderateur</option>
+                                                <option  value="all">Tous</option>
+                                            </select>
+                                            <div class="input-group-append">
+                                                <button id="removeRow" type="button" class="btn btn-danger">Supprimer</button>
+                                            </div>
+                                        </div>
+                                    </div>
+            `
 
+        $('#newRowTotalRecompense').append(html);
+    });
+    
     //add Last Recompense row
     // add row
     $("#addAutoRecompense").click(function () {

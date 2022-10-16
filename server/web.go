@@ -3,6 +3,8 @@ package server
 import (
 	"encoding/gob"
 	"github.com/gin-gonic/autotls"
+	"html/template"
+	"strings"
 	"superdicobot/internal/handlers"
 	"superdicobot/internal/logger"
 	"time"
@@ -31,7 +33,15 @@ func LaunchServer(notify chan string, config utils.Config, Logger logger.LogWrap
 	r.Static("/js", "./server/web/js")
 	r.Static("/favicon.ico", "./server/web/favicon.ico")
 
+	r.SetFuncMap(template.FuncMap{
+		"StringsJoin": strings.Join,
+		"LocalDate": func(t time.Time) string {
+			l, _ := time.LoadLocation("Europe/Paris")
+			return t.In(l).Format("02/01/2006 15:04:05")
+		},
+	})
 	r.LoadHTMLGlob("server/templates/**/*")
+
 	gob.Register(oauth2.Token{})
 
 	r.Use(utils.ConfigMiddleware(config, Logger))
