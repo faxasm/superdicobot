@@ -11,6 +11,7 @@ type Config struct {
 	LoggerLevel string    `mapstructure:"loggerLevel"`
 	LoggerFile  string    `mapstructure:"loggerFile"`
 	BddPath     string    `mapstructure:"bddPath"`
+	CachePath   string    `mapstructure:"cachePath"`
 	Bots        []Bot     `mapstructure:"bots"`
 	EventSub    EventSub  `mapstructure:"eventSub"`
 	Webserver   Webserver `mapstructure:"webserver"`

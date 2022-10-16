@@ -8,12 +8,14 @@ import (
 	"github.com/nicklaw5/helix/v2"
 	"go.uber.org/zap"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"superdicobot/eventsub"
 	userpool "superdicobot/internal"
 	"superdicobot/internal/bdd"
 	"superdicobot/internal/logger"
+	"superdicobot/internal/services"
 	"superdicobot/utils"
 	"sync"
 	"time"
@@ -208,9 +210,73 @@ func NewBot(notify chan string, botConfig utils.Bot, allConfig utils.Config) {
 					zap.Reflect("message", message))
 
 				cmd := customCmd.Cmd
-				if strings.Contains(customCmd.Cmd, "%s") {
-					cmd = fmt.Sprintf(customCmd.Cmd, endOfMatch)
+
+				if strings.Contains(cmd, "%s") {
+					cmd = fmt.Sprintf(cmd, endOfMatch)
 				}
+
+				if strings.Contains(cmd, "{{ChessCom") {
+					chessClient := &services.ChessClient{
+						Config: allConfig,
+						Logger: Logger,
+					}
+					//get user for stats
+					user := message.User.Name
+					if endOfMatch != "" {
+						args := strings.Split(endOfMatch, " ")
+						if len(args) > 0 {
+							user = args[0]
+						}
+					}
+
+					if strings.Contains(cmd, "{{Arg.User}}") {
+						cmd = strings.Replace(cmd, "{{Arg.User}}", user, -1)
+					}
+					if strings.Contains(cmd, "{{ChessComStats.") {
+						has, userStats := chessClient.GetStats(user)
+						Logger.Info("has user stats", zap.Bool("hasStats", has), zap.Reflect("stats", userStats))
+						if !has {
+							cmd = fmt.Sprintf("/me %s n'est pas sur chess.com", user)
+						}
+						if strings.Contains(cmd, "{{ChessComStats.Best}}") {
+							allStats := make([]string, 0)
+							if userStats.ChessBullet.Best.Rating > 0 {
+								allStats = append(allStats, fmt.Sprintf("Bullet: %d", userStats.ChessBullet.Best.Rating))
+							}
+							if userStats.ChessBlitz.Best.Rating > 0 {
+								allStats = append(allStats, fmt.Sprintf("Blitz: %d", userStats.ChessBlitz.Best.Rating))
+							}
+							if userStats.ChessRapid.Best.Rating > 0 {
+								allStats = append(allStats, fmt.Sprintf("Rapid: %d", userStats.ChessRapid.Best.Rating))
+							}
+							if userStats.ChessDaily.Best.Rating > 0 {
+								allStats = append(allStats, fmt.Sprintf("Daily: %d", userStats.ChessDaily.Best.Rating))
+							}
+							cmd = strings.Replace(cmd, "{{ChessComStats.Best}}", strings.Join(allStats, ", "), -1)
+						}
+					}
+
+					if strings.Contains(cmd, "{{ChessComVs.") {
+						userFrom := ""
+						r, _ := regexp.Compile(`\{\{ChessComVs:([^\}]*)\}\}`)
+						l := r.FindStringSubmatch(cmd)
+						if len(l) > 1 {
+							userFrom = l[1]
+							cmd = strings.Replace(cmd, l[0], l[1], -1)
+						}
+						if strings.Contains(cmd, "{{ChessComVs.Results}}") {
+							missing, results := chessClient.ChessVsWithCache(userFrom, user)
+							if missing != "" {
+								cmd = fmt.Sprintf("/me %s n'est pas sur chess.com", missing)
+							} else {
+								resultValues := fmt.Sprintf("%d Win / %d Loss / %d Draw", results.Win, results.Loose, results.Draw)
+								cmd = strings.Replace(cmd, "{{ChessComVs.Results}}", resultValues, -1)
+							}
+						}
+
+					}
+				}
+
 				if strings.Contains(cmd, "{{subCount}}") {
 					cmd = strings.Replace(cmd, "{{subCount}}", channelInstance.getSubCount(), -1)
 				}

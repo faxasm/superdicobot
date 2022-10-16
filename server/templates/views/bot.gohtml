@@ -79,11 +79,26 @@
                         </div>
                             <div>
                                 <ul>
+                                    <li>{{"{{"}}Arg.User{{"}}"}}: Utilisateur appelant, ou en parametre</li>
                                     <li>{{"{{"}}followerCount{{"}}"}} : Nombre de followers</li>
                                     <li>{{"{{"}}subCount{{"}}"}} : Nombre de sub</li>
                                     <li>{{"{{"}}viewerCount{{"}}"}} : Nombre de viewers</li>
                                     <li>{{"{{"}}streamDuration{{"}}"}} : Durée de stream</li>
                                     <li>{{"{{"}}lastSubDuration{{"}}"}} : Durée depuis le dernier sub</li>
+                                    <li>Chess.com
+                                        <ul>
+                                            <li>Stats
+                                                <ul><li>{{"{{"}}ChessComStats.Best{{"}}"}}: Stats elo max</li></ul>
+                                            </li>
+                                            <li>Versus
+                                                <ul>
+                                                    <li>{{"{{"}}ChessComVs:xxxx{{"}}"}}: Premier utilisateur Vs nom: xxxx</li>
+                                                    <li>{{"{{"}}ChessComVs.Results{{"}}"}}: Resultat du vs (contre l'utilisateur en params)</li>
+                                                </ul>
+
+                                            </li>
+                                        </ul>
+                                    </li>
                                 </ul>
                             </div>
                     </div>
