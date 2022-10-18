@@ -273,7 +273,28 @@ func NewBot(notify chan string, botConfig utils.Bot, allConfig utils.Config) {
 								cmd = strings.Replace(cmd, "{{ChessComVs.Results}}", resultValues, -1)
 							}
 						}
+						if strings.Contains(cmd, "{{ChessComVs.LastMatch}}") {
+							missing, results := chessClient.ChessVsLastMatchWithCache(userFrom, user)
+							if missing != "" {
+								cmd = fmt.Sprintf("/me %s n'est pas sur chess.com", missing)
+							} else {
+								if results.EndTime > 0 {
 
+									date := time.Unix(int64(results.EndTime), 0)
+									l, _ := time.LoadLocation("Europe/Paris")
+
+									resultValues := fmt.Sprintf("%s,%s (Blanc: %s, Noir: %s) => %s",
+										date.In(l).Format("02/01/2006"),
+										results.Result,
+										results.ChessGame.White.Username,
+										results.ChessGame.Black.Username,
+										results.ChessGame.URL)
+									cmd = strings.Replace(cmd, "{{ChessComVs.LastMatch}}", resultValues, -1)
+								} else {
+									cmd = fmt.Sprintf("/me [chess.com] %s n'a pas joué contre %s", user, userFrom)
+								}
+							}
+						}
 					}
 				}
 

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"superdicobot/internal/logger"
 	"superdicobot/utils"
+	"time"
 )
 
 type ChessClient struct {
@@ -126,37 +127,45 @@ type ChessVsResult struct {
 	Draw  int
 }
 
+type ChessVsLastMatchResult struct {
+	EndTime   int
+	ChessGame ChessGame
+	Result    string
+}
+
 type ChessUserMonthlyArchive struct {
-	Games []struct {
-		URL          string `json:"url"`
-		Pgn          string `json:"pgn"`
-		TimeControl  string `json:"time_control"`
-		EndTime      int    `json:"end_time"`
-		Rated        bool   `json:"rated"`
-		Tcn          string `json:"tcn"`
-		UUID         string `json:"uuid"`
-		InitialSetup string `json:"initial_setup"`
-		Fen          string `json:"fen"`
-		StartTime    int    `json:"start_time"`
-		TimeClass    string `json:"time_class"`
-		Rules        string `json:"rules"`
-		White        struct {
-			Rating   int    `json:"rating"`
-			Result   string `json:"result"`
-			ID       string `json:"@id"`
-			Username string `json:"username"`
-			UUID     string `json:"uuid"`
-		} `json:"white"`
-		Black struct {
-			Rating   int    `json:"rating"`
-			Result   string `json:"result"`
-			ID       string `json:"@id"`
-			Username string `json:"username"`
-			UUID     string `json:"uuid"`
-		} `json:"black"`
-		Tournament string `json:"tournament,omitempty"`
-		Match      string `json:"match,omitempty"`
-	} `json:"games"`
+	Games []ChessGame `json:"games"`
+}
+
+type ChessGame struct {
+	URL          string `json:"url"`
+	Pgn          string `json:"pgn"`
+	TimeControl  string `json:"time_control"`
+	EndTime      int    `json:"end_time"`
+	Rated        bool   `json:"rated"`
+	Tcn          string `json:"tcn"`
+	UUID         string `json:"uuid"`
+	InitialSetup string `json:"initial_setup"`
+	Fen          string `json:"fen"`
+	StartTime    int    `json:"start_time"`
+	TimeClass    string `json:"time_class"`
+	Rules        string `json:"rules"`
+	White        struct {
+		Rating   int    `json:"rating"`
+		Result   string `json:"result"`
+		ID       string `json:"@id"`
+		Username string `json:"username"`
+		UUID     string `json:"uuid"`
+	} `json:"white"`
+	Black struct {
+		Rating   int    `json:"rating"`
+		Result   string `json:"result"`
+		ID       string `json:"@id"`
+		Username string `json:"username"`
+		UUID     string `json:"uuid"`
+	} `json:"black"`
+	Tournament string `json:"tournament,omitempty"`
+	Match      string `json:"match,omitempty"`
 }
 
 const ChessApi = "https://api.chess.com"
@@ -229,10 +238,52 @@ func (chessClient *ChessClient) ChessVsWithCache(loginCached string, loginVs str
 	return "", results
 }
 
+func (chessClient *ChessClient) ChessVsLastMatchWithCache(loginCached string, loginVs string) (string, *ChessVsLastMatchResult) {
+
+	loginVs = strings.ToLower(loginVs)
+	loginCached = strings.ToLower(loginCached)
+	uriLoginCached := fmt.Sprintf(ArchiveUri, loginCached)
+	results := &ChessVsLastMatchResult{}
+
+	archiveLoginCachedResponse, err := resty.New().R().Get(fmt.Sprintf("%s%s", ChessApi, uriLoginCached))
+	if err != nil {
+		chessClient.Logger.Warn("unable to get user archive", zap.Error(err))
+		return loginCached, results
+	}
+	if archiveLoginCachedResponse.IsError() {
+		chessClient.Logger.Info("error when fetchuser archive", zap.Int("status", archiveLoginCachedResponse.StatusCode()), zap.ByteString("response", archiveLoginCachedResponse.Body()))
+		return loginCached, results
+	}
+
+	uriLoginVs := fmt.Sprintf(ArchiveUri, loginVs)
+
+	archiveLoginVsResponse, err := resty.New().R().Get(fmt.Sprintf("%s%s", ChessApi, uriLoginVs))
+	if err != nil {
+		chessClient.Logger.Warn("unable to get user archive", zap.Error(err))
+		return loginVs, results
+	}
+	if archiveLoginVsResponse.IsError() {
+		chessClient.Logger.Info("unable to get user archive", zap.Int("status", archiveLoginVsResponse.StatusCode()), zap.ByteString("response", archiveLoginVsResponse.Body()))
+		return loginVs, results
+	}
+
+	archiveLoginCached := &ChessUserArchives{}
+	if err = json.Unmarshal(archiveLoginCachedResponse.Body(), archiveLoginCached); err != nil {
+		return loginCached, results
+	}
+
+	for _, archiveMonthly := range archiveLoginCached.Archives {
+		if isOk, chessUserMonthlyArchive := chessClient.getOrCreateArchiveInCache(archiveMonthly); isOk {
+			chessClient.setVsLastMatch(loginVs, chessUserMonthlyArchive, results)
+		}
+	}
+
+	return "", results
+}
+
 func (chessClient *ChessClient) addVsStat(userVs string, archive *ChessUserMonthlyArchive, result *ChessVsResult) {
 	for _, game := range archive.Games {
 		if strings.ToLower(game.Black.Username) == userVs || strings.ToLower(game.White.Username) == userVs {
-			chessClient.Logger.Info("found match", zap.Reflect("match", game))
 			switch game.Black.Result {
 			case "win":
 				if userVs == strings.ToLower(game.Black.Username) {
@@ -254,11 +305,43 @@ func (chessClient *ChessClient) addVsStat(userVs string, archive *ChessUserMonth
 	}
 }
 
+func (chessClient *ChessClient) setVsLastMatch(userVs string, archive *ChessUserMonthlyArchive, result *ChessVsLastMatchResult) {
+	for _, game := range archive.Games {
+		if strings.ToLower(game.Black.Username) == userVs || strings.ToLower(game.White.Username) == userVs {
+
+			if game.EndTime > result.EndTime {
+				result.EndTime = game.EndTime
+				result.ChessGame = game
+				switch game.Black.Result {
+				case "win":
+					result.Result = fmt.Sprintf("Victoire de %s", game.Black.Username)
+				case "agreed", "repetition", "stalemate", "insufficient", "50move", "timevsinsufficient":
+					result.Result = fmt.Sprintf("Match nul")
+				case "lose", "timeout", "resigned", "checkmated":
+					result.Result = fmt.Sprintf("Victoire de %s", game.White.Username)
+				default:
+				}
+
+			}
+		}
+	}
+}
+
 func (chessClient *ChessClient) getOrCreateArchiveInCache(archive string) (bool, *ChessUserMonthlyArchive) {
 	cacheFile := base64.StdEncoding.EncodeToString([]byte(archive))
 	chessUserMonthlyArchive := &ChessUserMonthlyArchive{}
+	infosArchive := strings.Split(archive, "/")
+	month := infosArchive[len(infosArchive)-1]
+	year := infosArchive[len(infosArchive)-2]
+	hasContent := false
+	fileContent := []byte("")
+	currentMonth := time.Now().Format("01")
+	currentYear := time.Now().Format("2006")
 	filePath := chessClient.Config.CachePath + "/chess/" + cacheFile
-	hasContent, fileContent := utils.GetFileContent(filePath, chessClient.Logger)
+
+	if month != currentMonth || year != currentYear {
+		hasContent, fileContent = utils.GetFileContent(filePath, chessClient.Logger)
+	}
 	if !hasContent {
 		archiveResponse, err := resty.New().R().Get(archive)
 		if err != nil {
