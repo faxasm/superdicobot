@@ -478,3 +478,54 @@ func Redeems(c *gin.Context) {
 		},
 	)
 }
+
+func ApiKeys(c *gin.Context) {
+	//c.String(200, csrf.GetToken(c))
+	channel := c.Param("channel")
+	botName := c.Param("bot")
+	user := c.Value("user").(string)
+	config := c.Value("config").(utils.Config)
+	channelConfig := c.Value("channelConfig").(utils.ChannelConfig)
+	safeConfig := utils.GetSafeConfig(config, user)
+	botConfig, err := utils.GetBot(config, botName)
+	if err != nil {
+		c.HTML(
+			http.StatusNotFound,
+			"views/404.gohtml",
+			gin.H{
+				"user":           user,
+				"config":         safeConfig,
+				"currentBot":     "",
+				"currentChannel": "",
+			},
+		)
+		return
+	}
+
+	if !oauth.SecureRoute(user, channel, botConfig.Administrator) {
+		c.HTML(
+			http.StatusNotFound,
+			"views/404.gohtml",
+			gin.H{
+				"user":           user,
+				"config":         safeConfig,
+				"currentBot":     "",
+				"currentChannel": "",
+			},
+		)
+		return
+	}
+
+	c.HTML(
+		http.StatusOK,
+		"views/apikeys.gohtml",
+		gin.H{
+			"user":            user,
+			"config":          safeConfig,
+			"currentBot":      botName,
+			"currentChannel":  channel,
+			"extensionApiKey": channelConfig.ExtensionApiKey,
+			"isApiKeys":       true,
+		},
+	)
+}

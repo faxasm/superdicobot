@@ -61,6 +61,8 @@ func LaunchServer(notify chan string, config utils.Config, Logger logger.LogWrap
 	r.GET("/login", oauth.Login)
 	r.GET("/redirect", oauth.Redirect)
 	r.POST("/events", handlers.EventCallback)
+	r.OPTIONS("/chess/events", handlers.ChessEventOptions)
+	r.POST("/chess/events", handlers.ChessEventCallback)
 
 	restricted := r.Group("/admin")
 	//register statics
@@ -74,8 +76,10 @@ func LaunchServer(notify chan string, config utils.Config, Logger logger.LogWrap
 	restricted.GET("/:bot/:channel/rewards", handlers.Rewards)
 	restricted.GET("/:bot/:channel/rewards/:rewardId", handlers.Redeems)
 
+	restricted.GET("/:bot/:channel/apikeys", handlers.ApiKeys)
+
 	var err error
-	if len(config.Webserver.Hosts) > 0 {
+	if len(config.Webserver.Hosts) > 0 && config.Webserver.Hosts[0] != "localhost:8080" {
 		err = autotls.Run(r, config.Webserver.Hosts...)
 	} else {
 		err = r.Run(":8080")

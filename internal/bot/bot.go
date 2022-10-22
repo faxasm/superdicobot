@@ -2,6 +2,7 @@ package bot
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"github.com/gempir/go-twitch-irc/v3"
 	"github.com/go-co-op/gocron"
@@ -9,11 +10,13 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"superdicobot/eventsub"
 	userpool "superdicobot/internal"
 	"superdicobot/internal/bdd"
+	"superdicobot/internal/handlers"
 	"superdicobot/internal/logger"
 	"superdicobot/internal/services"
 	"superdicobot/utils"
@@ -215,7 +218,83 @@ func NewBot(notify chan string, botConfig utils.Bot, allConfig utils.Config) {
 					cmd = fmt.Sprintf(cmd, endOfMatch)
 				}
 
+				if strings.Contains(cmd, "{{Recompenses.") {
+					if strings.Contains(cmd, "{{Recompenses.ScoreDuMois") {
+						idRec := ""
+						r, _ := regexp.Compile(`\{\{Recompenses\.ScoreDuMois:([^\}]*)\}\}`)
+						l := r.FindStringSubmatch(cmd)
+						if len(l) > 1 {
+							idRec = l[1]
+						}
+						if idRec != "" {
+							filePath := allConfig.BddPath + "/events/" + message.Channel + "/rewards/" + idRec + ".csv"
+							var m sync.Mutex
+							m.Lock()
+							f, err := os.Open(filePath)
+							if err != nil {
+								Logger.Error("Unable to read input file "+filePath, zap.Error(err))
+								if err := f.Close(); err != nil {
+									Logger.Error("Unable to close input file "+filePath, zap.Error(err))
+								}
+							}
+
+							csvReader := csv.NewReader(f)
+							csvReader.FieldsPerRecord = -1
+							records, err := csvReader.ReadAll()
+							if err := f.Close(); err != nil {
+								Logger.Error("Unable to close input file "+filePath, zap.Error(err))
+							}
+							m.Unlock()
+							if err != nil {
+								Logger.Error("Unable to read input file "+filePath, zap.Error(err))
+							}
+							currentDate := time.Now()
+							if len(records) > 0 {
+								userScore := make(map[string]int)
+								userName := make(map[string]string)
+								for _, record := range records {
+									user := record[4]
+									name := record[6]
+									userName[user] = name
+									status := "fulfilled"
+									if len(record) >= 9 {
+										status = record[8]
+									}
+									if status != "fulfilled" {
+										continue
+									}
+									date := record[7]
+									redeemDate, _ := time.Parse(time.RFC3339, date)
+
+									if redeemDate.Month().String() == currentDate.Month().String() && redeemDate.Year() == currentDate.Year() {
+										if val, ok := userScore[user]; ok {
+											userScore[user] = val + 1
+											//do something here
+										} else {
+											userScore[user] = 1
+										}
+									}
+								}
+								keys := make([]string, 0, len(userScore))
+
+								for k := range userScore {
+									keys = append(keys, k)
+								}
+								sort.SliceStable(keys, func(i, j int) bool {
+									return userScore[keys[i]] > userScore[keys[j]]
+								})
+								msg := make([]string, 0, len(userScore))
+								for _, k := range keys {
+									msg = append(msg, fmt.Sprintf("%s %d", userName[k], userScore[k]))
+								}
+
+								cmd = strings.Replace(cmd, l[0], strings.Join(msg, " - "), -1)
+							}
+						}
+					}
+				}
 				if strings.Contains(cmd, "{{ChessCom") {
+					Logger.Info("chesscom")
 					chessClient := &services.ChessClient{
 						Config: allConfig,
 						Logger: Logger,
@@ -232,6 +311,48 @@ func NewBot(notify chan string, botConfig utils.Bot, allConfig utils.Config) {
 					if strings.Contains(cmd, "{{Arg.User}}") {
 						cmd = strings.Replace(cmd, "{{Arg.User}}", user, -1)
 					}
+
+					if strings.Contains(cmd, "{{ChessComLive.") {
+						//open live
+						Logger.Info("chesscomelive commande")
+						filePath := allConfig.BddPath + "/events/" + message.Channel + "/chess/messages.json"
+
+						content, err := os.ReadFile(filePath)
+						if err != nil {
+							Logger.Error("Unable to read input file "+filePath, zap.Error(err))
+							cmd = fmt.Sprintf("/me aucune partie en live sur chess.com")
+						}
+						event := &handlers.ChessEvent{}
+						if err := json.Unmarshal(content, event); err != nil {
+							Logger.Error("Unable to parse body "+filePath, zap.Error(err))
+							cmd = fmt.Sprintf("/me aucune partie en live sur chess.com")
+						} else {
+							if event.Date.After(time.Now().Add(-time.Duration(10) * time.Second)) {
+								userFrom := ""
+								r, _ := regexp.Compile(`\{\{ChessComLive\.Opponent:([^\}]*)\}\}`)
+								l := r.FindStringSubmatch(cmd)
+								if len(l) > 1 {
+									userFrom = l[1]
+
+									opponent := event.White
+									if strings.ToLower(event.White) == strings.ToLower(userFrom) {
+										opponent = event.Black
+									}
+									cmd = strings.Replace(cmd, l[0], opponent, -1)
+								}
+
+								cmd = strings.Replace(cmd, "{{ChessComLive.White}}", event.White, -1)
+								cmd = strings.Replace(cmd, "{{ChessComLive.Black}}", event.Black, -1)
+								cmd = strings.Replace(cmd, "{{ChessComLive.WhiteClock}}", event.WhiteClock, -1)
+								cmd = strings.Replace(cmd, "{{ChessComLive.BlackClock}}", event.BlackClock, -1)
+								cmd = strings.Replace(cmd, "{{ChessComLive.Speed}}", event.Speed, -1)
+							} else {
+								cmd = fmt.Sprintf("/me aucune partie en live sur chess.com")
+							}
+						}
+
+					}
+
 					if strings.Contains(cmd, "{{ChessComStats.") {
 						has, userStats := chessClient.GetStats(user)
 						Logger.Info("has user stats", zap.Bool("hasStats", has), zap.Reflect("stats", userStats))

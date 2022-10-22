@@ -1,0 +1,41 @@
+{{ define "views/apikeys.gohtml"}}
+     {{ template "layouts/top.gohtml" .}}
+        <!-- /.container-fluid -->
+
+<!-- Project Card Example -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Extensions</h6>
+    </div>
+    <div class="card-body">
+        <div class="border border-warning m-1 p-1">
+            <h4>Extension chrome superdicobot</h4>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div id="inputFormRow">
+                        <div class="input-group">
+                            <input style="width:150px;" type="text" disabled="disabled"  class="form-control m-input" value="Api Key" autocomplete="off">
+                            <input type="text" class="form-control m-input w-75" disabled="disabled" value="{{ .extensionApiKey }}"  autocomplete="off">
+                        </div>
+                        <div class="input-group">
+                            <input style="width:150px;" type="text" disabled="disabled"  class="form-control m-input" value="Uri du bot" autocomplete="off">
+                            <input type="text" class="form-control m-input w-75" disabled="disabled" value="https://{{ index .config.Webserver.Hosts 0 }}/chess/events"  autocomplete="off">
+                        </div>
+                        <div class="input-group">
+                            <input style="width:150px;" type="text" disabled="disabled"  class="form-control m-input" value="Chaine twitch" autocomplete="off">
+                            <input type="text" class="form-control m-input w-75" disabled="disabled" value="{{ .currentChannel }}"  autocomplete="off">
+                        </div>
+                        <div class="input-group">
+                            <input style="width:150px;" type="text" disabled="disabled"  class="form-control m-input" value="Nom du bot" autocomplete="off">
+                            <input type="text" class="form-control m-input w-75" disabled="disabled" value="{{ .currentBot }}"  autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+     {{ template "layouts/bottom.gohtml" .}}
+
+{{ end }}

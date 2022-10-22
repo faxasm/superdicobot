@@ -44,13 +44,14 @@ type Bot struct {
 }
 
 type ChannelConfig struct {
-	Channel     string                `mapstructure:"channel"`
-	UserId      string                `mapstructure:"userId"`
-	Token       string                `mapstructure:"token"`
-	PingCmd     string                `mapstructure:"pingCmd"`
-	LoggerLevel string                `mapstructure:"loggerLevel"`
-	LoggerFile  string                `mapstructure:"loggerFile"`
-	EventSub    EventSubChannelConfig `mapstructure:"eventSub"`
+	Channel         string                `mapstructure:"channel"`
+	UserId          string                `mapstructure:"userId"`
+	ExtensionApiKey string                `mapstructure:"extensionApiKey"`
+	Token           string                `mapstructure:"token"`
+	PingCmd         string                `mapstructure:"pingCmd"`
+	LoggerLevel     string                `mapstructure:"loggerLevel"`
+	LoggerFile      string                `mapstructure:"loggerFile"`
+	EventSub        EventSubChannelConfig `mapstructure:"eventSub"`
 }
 
 type EventSubChannelConfig struct {
@@ -106,6 +107,7 @@ func ConfigMiddleware(config Config, logger logger.LogWrapperObj) func(ctx *gin.
 func GetSafeConfig(config Config, user string) Config {
 	newConfig := Config{}
 
+	newConfig.Webserver = config.Webserver
 	for _, bot := range config.Bots {
 		newBot := Bot{}
 		newBot.User = bot.User
@@ -134,4 +136,18 @@ func GetBot(config Config, botName string) (Bot, error) {
 	}
 
 	return Bot{}, errors.New("unable to find bot")
+}
+
+func GetChannelConfig(config Config, botName string, channel string) (ChannelConfig, error) {
+	for _, bot := range config.Bots {
+		if bot.User == botName {
+			for _, channelConfig := range bot.Channels {
+				if channelConfig.Channel == channel {
+					return channelConfig, nil
+				}
+			}
+		}
+	}
+	return ChannelConfig{}, errors.New("unable to find channel")
+
 }
